@@ -1,7 +1,9 @@
 {
   "name": "@testing-library/react-render-stream",
   "version": "0.1.0",
-  "repository": "https://github.com/phryneas/react-render-stream-testing-library.git",
+  "repository": {
+    "url": "git+https://github.com/phryneas/react-render-stream-testing-library.git"
+  },
   "author": {
     "name": "Lenz Weber-Tronic",
     "email": "lenz@apollographql.com"
@@ -10,16 +12,36 @@
   "license": "MIT",
   "exports": {
     ".": {
+      "types": {
+        "module-sync": "./dist/index.d.ts",
+        "module": "./dist/index.d.ts",
+        "import": "./dist/index.d.ts",
+        "require": "./dist/index.d.cts"
+      },
       "module-sync": "./dist/index.js",
       "module": "./dist/index.js",
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
     },
     "./jest": {
+      "types": {
+        "module-sync": "./dist/jest.d.ts",
+        "module": "./dist/jest.d.ts",
+        "import": "./dist/jest.d.ts",
+        "require": "./dist/jest.d.cts"
+      },
       "module-sync": "./dist/jest.js",
       "module": "./dist/jest.js",
       "import": "./dist/jest.js",
       "require": "./dist/jest.cjs"
+    }
+  },
+  "types": "./dist/index.d.ts",
+  "typesVersions": {
+    "*": {
+      "jest": [
+        "./dist/jest.d.ts"
+      ]
     }
   },
   "files": [
@@ -31,6 +53,7 @@
     "rehackt": "^0.1.0"
   },
   "devDependencies": {
+    "@arethetypeswrong/cli": "^0.16.4",
     "@jest/globals": "^29.7.0",
     "@tsconfig/recommended": "^1.0.7",
     "@types/jsdom": "^21.1.7",
@@ -39,6 +62,7 @@
     "expect": "^29.7.0",
     "pkg-pr-new": "^0.0.29",
     "prettier": "^3.3.3",
+    "publint": "^0.2.11",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "tsup": "^8.3.0",
@@ -52,7 +76,9 @@
   },
   "scripts": {
     "build": "tsup",
-    "pkg-pr-new-publish": "yarn build && pkg-pr-new publish --no-template"
+    "pkg-pr-new-publish": "yarn build && pkg-pr-new publish --no-template",
+    "prepack": "yarn build",
+    "verify": "attw --pack . && publint"
   },
   "packageManager": "yarn@4.5.0"
 }
