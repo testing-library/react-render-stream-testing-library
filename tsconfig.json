@@ -16,6 +16,11 @@
     ],
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
+    "paths": {
+      "@testing-library/react-render-stream": [
+        "./src/profile/index.ts"
+      ]
+    }
   },
   "include": [
     "src"
