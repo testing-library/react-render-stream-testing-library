@@ -30,12 +30,12 @@ export interface BaseRender {
 type Screen = typeof screen;
 /** @internal */
 export type SyncScreen = {
-  [K in keyof Screen]: K extends `find${string}` ?
-    {
-      /** @deprecated A snapshot is static, so avoid async queries! */
-      (...args: Parameters<Screen[K]>): ReturnType<Screen[K]>;
-    }
-  : Screen[K];
+  [K in keyof Screen]: K extends `find${string}`
+    ? {
+        /** @deprecated A snapshot is static, so avoid async queries! */
+        (...args: Parameters<Screen[K]>): ReturnType<Screen[K]>;
+      }
+    : Screen[K];
 };
 
 /** @internal */
@@ -102,7 +102,7 @@ export class RenderInstance<Snapshot> implements Render<Snapshot> {
 
     const virtualConsole = new VirtualConsole();
     const stackTrace = captureStackTrace("RenderInstance.get");
-    virtualConsole.on("jsdomError", (error) => {
+    virtualConsole.on("jsdomError", (error: any) => {
       throw applyStackTrace(error, stackTrace);
     });
 
