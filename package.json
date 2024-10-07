@@ -24,7 +24,8 @@
   },
   "dependencies": {
     "@testing-library/dom": "^10.4.0",
-    "jsdom": "^25.0.1"
+    "jsdom": "^25.0.1",
+    "rehackt": "^0.1.0"
   },
   "devDependencies": {
     "@jest/globals": "^29.7.0",

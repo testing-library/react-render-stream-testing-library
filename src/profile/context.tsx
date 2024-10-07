@@ -1,4 +1,4 @@
-import * as React from "react";
+import * as React from "rehackt";
 
 export interface ProfilerContextValue {
   renderedComponents: Array<React.ComponentType | string>;
