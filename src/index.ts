@@ -1,4 +1,8 @@
-export type { NextRenderOptions, RenderStream } from "./profile/profile.js";
+export type {
+  NextRenderOptions,
+  RenderStream,
+  RenderStreamWithRenderFn,
+} from "./profile/profile.js";
 export {
   createProfiler,
   useTrackRenders,

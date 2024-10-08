@@ -6,7 +6,7 @@ import { applyStackTrace, captureStackTrace } from "./traces.js";
 import type { ProfilerContextValue } from "./context.js";
 import { ProfilerContextProvider, useProfilerContext } from "./context.js";
 import { disableActWarnings } from "./disableActWarnings.js";
-import { render } from "@testing-library/react";
+import { render as baseRender, RenderOptions } from "@testing-library/react";
 
 export type ValidSnapshot =
   | void
@@ -80,9 +80,9 @@ export interface RenderStream<Snapshot extends ValidSnapshot>
   extends ProfiledComponentFields<Snapshot>,
     ProfiledComponentOnlyFields<Snapshot> {}
 
-export interface RenderStreamWithWrapper<Snapshot extends ValidSnapshot>
+export interface RenderStreamWithRenderFn<Snapshot extends ValidSnapshot>
   extends RenderStream<Snapshot> {
-  Wrapper: React.FC<{ children: React.ReactNode }>;
+  render: typeof baseRender;
 }
 
 export type ProfilerOptions<Snapshot extends ValidSnapshot> = {
@@ -108,7 +108,7 @@ export function createProfiler<Snapshot extends ValidSnapshot = void>({
   snapshotDOM = false,
   initialSnapshot,
   skipNonTrackingRenders,
-}: ProfilerOptions<Snapshot> = {}): RenderStreamWithWrapper<Snapshot> {
+}: ProfilerOptions<Snapshot> = {}): RenderStreamWithRenderFn<Snapshot> {
   let nextRender: Promise<Render<Snapshot>> | undefined;
   let resolveNextRender: ((render: Render<Snapshot>) => void) | undefined;
   let rejectNextRender: ((error: unknown) => void) | undefined;
@@ -221,7 +221,27 @@ export function createProfiler<Snapshot extends ValidSnapshot = void>({
     );
   }
 
-  const Profiler: RenderStreamWithWrapper<Snapshot> = Object.assign(
+  const render = ((
+    ui: React.ReactNode,
+    options?: RenderOptions<any, any, any>
+  ) => {
+    return baseRender(ui, {
+      ...options,
+      wrapper: (props) => {
+        let elem: React.ReactNode = React.createElement(
+          Wrapper,
+          undefined,
+          props.children
+        );
+        if (options?.wrapper) {
+          elem = React.createElement(options.wrapper, undefined, elem);
+        }
+        return elem;
+      },
+    });
+  }) as typeof baseRender;
+
+  const Profiler: RenderStreamWithRenderFn<Snapshot> = Object.assign(
     {
       replaceSnapshot,
       mergeSnapshot,
@@ -318,7 +338,7 @@ export function createProfiler<Snapshot extends ValidSnapshot = void>({
         return nextRender;
       },
     } satisfies ProfiledComponentFields<Snapshot>,
-    { Wrapper }
+    { render }
   );
   return Profiler;
 }

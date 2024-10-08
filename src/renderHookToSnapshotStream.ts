@@ -1,8 +1,7 @@
-import { render, RenderHookOptions } from "@testing-library/react";
+import { RenderHookOptions } from "@testing-library/react";
 import {
   createProfiler,
   ProfiledComponentFields,
-  RenderStream,
   ValidSnapshot,
 } from "./profile/profile.js";
 import { Render } from "./profile/Render.js";
@@ -47,7 +46,7 @@ export function renderHookToSnapshotStream<
     unmount: () => void;
   },
 ] {
-  const { Wrapper, ...stream } = createProfiler<ReturnValue>();
+  const { render, ...stream } = createProfiler<ReturnValue>();
 
   const ProfiledHook: React.FC<Props> = (props) => {
     stream.replaceSnapshot(renderCallback(props));
@@ -56,20 +55,7 @@ export function renderHookToSnapshotStream<
 
   const { rerender: baseRerender, unmount } = render(
     createElement(ProfiledHook, initialProps),
-    {
-      ...options,
-      wrapper(props) {
-        let elem: React.ReactNode = createElement(
-          Wrapper,
-          undefined,
-          props.children
-        );
-        if (options.wrapper) {
-          elem = createElement(options.wrapper, undefined, elem);
-        }
-        return elem;
-      },
-    }
+    options
   );
 
   function rerender(rerenderCallbackProps: Props) {
