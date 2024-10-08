@@ -2,7 +2,7 @@ import { defineConfig } from "tsup";
 
 export default defineConfig({
   entry: {
-    index: "src/profile/index.ts",
+    index: "src/index.ts",
     jest: "src/jest/index.ts",
   },
   splitting: false,

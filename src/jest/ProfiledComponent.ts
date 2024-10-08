@@ -2,18 +2,16 @@ import type { MatcherFunction } from "expect";
 import { WaitForRenderTimeoutError } from "@testing-library/react-render-stream";
 import type {
   NextRenderOptions,
-  Profiler,
-  ProfiledComponent,
-  ProfiledHook,
+  RenderStream,
 } from "@testing-library/react-render-stream";
 
 export const toRerender: MatcherFunction<[options?: NextRenderOptions]> =
   async function (actual, options) {
-    const _profiler = actual as
-      | Profiler<any>
-      | ProfiledComponent<any, any>
-      | ProfiledHook<any, any>;
-    const profiler = "Profiler" in _profiler ? _profiler.Profiler : _profiler;
+    const _profiler = actual as RenderStream<any>;
+    const profiler =
+      "Profiler" in _profiler
+        ? (_profiler.Profiler as RenderStream<any>)
+        : _profiler;
     const hint = this.utils.matcherHint("toRerender", "ProfiledComponent", "");
     let pass = true;
     try {
@@ -44,11 +42,11 @@ const failed = {};
 export const toRenderExactlyTimes: MatcherFunction<
   [times: number, options?: NextRenderOptions]
 > = async function (actual, times, optionsPerRender) {
-  const _profiler = actual as
-    | Profiler<any>
-    | ProfiledComponent<any, any>
-    | ProfiledHook<any, any>;
-  const profiler = "Profiler" in _profiler ? _profiler.Profiler : _profiler;
+  const _profiler = actual as RenderStream<any>;
+  const profiler =
+    "Profiler" in _profiler
+      ? (_profiler.Profiler as RenderStream<any>)
+      : _profiler;
   const options = { timeout: 100, ...optionsPerRender };
   const hint = this.utils.matcherHint("toRenderExactlyTimes");
   let pass = true;
