@@ -4,7 +4,7 @@ export type {
   RenderStreamWithRenderFn,
 } from "./profile/profile.js";
 export {
-  createProfiler,
+  createRenderStream,
   useTrackRenders,
   WaitForRenderTimeoutError,
 } from "./profile/profile.js";

@@ -3,7 +3,7 @@ import {
   type RenderResult as BaseResult,
 } from "@testing-library/react";
 import {
-  createProfiler,
+  createRenderStream,
   ProfiledComponentFields,
   ProfiledComponentOnlyFields,
   ProfilerOptions,
@@ -33,7 +33,7 @@ export function renderToRenderStream<Snapshot extends ValidSnapshot = void>(
     ...options
   }: RenderOptions<Snapshot> = {}
 ): RenderResult<Snapshot> {
-  const { render, ...stream } = createProfiler<Snapshot>({
+  const { render, ...stream } = createRenderStream<Snapshot>({
     onRender,
     snapshotDOM,
     initialSnapshot,

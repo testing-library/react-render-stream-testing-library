@@ -1,15 +1,13 @@
 import { RenderHookOptions } from "@testing-library/react";
 import {
-  createProfiler,
+  createRenderStream,
   NextRenderOptions,
-  ProfiledComponentFields,
   ValidSnapshot,
 } from "./profile/profile.js";
 import { Render } from "./profile/Render.js";
 import { createElement } from "react";
 import { Assertable, assertableSymbol, markAssertable } from "./assertable.js";
 
-/** @internal */
 export interface ProfiledHook<Snapshot extends ValidSnapshot>
   extends Assertable {
   /**
@@ -62,7 +60,7 @@ export function renderHookToSnapshotStream<
   renderCallback: (props: Props) => ReturnValue,
   { initialProps, ...options }: RenderHookOptions<Props> = {}
 ): HookSnapshotStream<Props, ReturnValue> {
-  const { render, ...stream } = createProfiler<ReturnValue>();
+  const { render, ...stream } = createRenderStream<ReturnValue>();
 
   const ProfiledHook: React.FC<Props> = (props) => {
     stream.replaceSnapshot(renderCallback(props));

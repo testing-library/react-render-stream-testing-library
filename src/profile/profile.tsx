@@ -15,7 +15,7 @@ export type ValidSnapshot =
 
 /** only used for passing around data internally */
 const _stackTrace = Symbol();
-/** @internal */
+
 export interface NextRenderOptions {
   timeout?: number;
   [_stackTrace]?: string;
@@ -104,8 +104,7 @@ export type ProfilerOptions<Snapshot extends ValidSnapshot> = {
   skipNonTrackingRenders?: boolean;
 };
 
-/** @internal */
-export function createProfiler<Snapshot extends ValidSnapshot = void>({
+export function createRenderStream<Snapshot extends ValidSnapshot = void>({
   onRender,
   snapshotDOM = false,
   initialSnapshot,
@@ -349,7 +348,6 @@ export function createProfiler<Snapshot extends ValidSnapshot = void>({
   return Profiler;
 }
 
-/** @internal */
 export class WaitForRenderTimeoutError extends Error {
   constructor() {
     super("Exceeded timeout waiting for next render.");
