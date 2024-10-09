@@ -7,6 +7,7 @@ import type { ProfilerContextValue } from "./context.js";
 import { ProfilerContextProvider, useProfilerContext } from "./context.js";
 import { disableActWarnings } from "./disableActWarnings.js";
 import { render as baseRender, RenderOptions } from "@testing-library/react";
+import { Assertable, markAssertable } from "../assertable.js";
 
 export type ValidSnapshot =
   | void
@@ -59,7 +60,8 @@ export interface ProfiledComponentFields<Snapshot> {
    * If no render has happened yet, it will wait for the next render to happen.
    * @throws {WaitForRenderTimeoutError} if no render happens within the timeout
    */
-  takeRender(options?: NextRenderOptions): Promise<Render<Snapshot>>;
+  takeRender: Assertable &
+    ((options?: NextRenderOptions) => Promise<Render<Snapshot>>);
   /**
    * Returns the total number of renders.
    */
@@ -241,7 +243,9 @@ export function createProfiler<Snapshot extends ValidSnapshot = void>({
     });
   }) as typeof baseRender;
 
-  const Profiler: RenderStreamWithRenderFn<Snapshot> = Object.assign(
+  let Profiler: RenderStreamWithRenderFn<Snapshot> = {} as any;
+  Profiler = Object.assign(
+    Profiler as {},
     {
       replaceSnapshot,
       mergeSnapshot,
@@ -269,7 +273,9 @@ export function createProfiler<Snapshot extends ValidSnapshot = void>({
           ...options,
         });
       },
-      async takeRender(options: NextRenderOptions = {}) {
+      takeRender: markAssertable(async function takeRender(
+        options: NextRenderOptions = {}
+      ) {
         // In many cases we do not control the resolution of the suspended
         // promise which results in noisy tests when the profiler due to
         // repeated act warnings.
@@ -290,7 +296,7 @@ export function createProfiler<Snapshot extends ValidSnapshot = void>({
             iteratorPosition++;
           }
         }
-      },
+      }, Profiler),
       getCurrentRender() {
         // The "current" render should point at the same render that the most
         // recent `takeRender` call returned, so we need to get the "previous"

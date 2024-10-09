@@ -13,11 +13,11 @@ import {
 type RenderOptions<Snapshot extends ValidSnapshot = void> = BaseOptions &
   ProfilerOptions<Snapshot>;
 
-type RenderResult<Snapshot extends ValidSnapshot = void> = [
-  Stream: ProfiledComponentFields<Snapshot> &
-    ProfiledComponentOnlyFields<Snapshot>,
-  renderResultPromise: Promise<BaseResult>,
-];
+type RenderResult<Snapshot extends ValidSnapshot = void> =
+  ProfiledComponentFields<Snapshot> &
+    ProfiledComponentOnlyFields<Snapshot> & {
+      renderResultPromise: Promise<BaseResult>;
+    };
 
 /**
  * Render into a container which is appended to document.body. It should be used with cleanup.
@@ -40,5 +40,5 @@ export function renderToRenderStream<Snapshot extends ValidSnapshot = void>(
     skipNonTrackingRenders,
   });
   const renderResultPromise = Promise.resolve().then(() => render(ui, options));
-  return [stream, renderResultPromise];
+  return { ...stream, renderResultPromise };
 }
