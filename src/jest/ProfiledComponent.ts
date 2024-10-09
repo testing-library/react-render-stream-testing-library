@@ -1,19 +1,19 @@
 import type { MatcherFunction } from "expect";
 import { WaitForRenderTimeoutError } from "@testing-library/react-render-stream";
 import type {
+  Assertable,
   NextRenderOptions,
-  Profiler,
-  ProfiledComponent,
-  ProfiledHook,
+  RenderStream,
 } from "@testing-library/react-render-stream";
+// explicitly imported the symbol from the internal file
+// this will bundle the `Symbol.for` call twice, but we keep it private
+import { assertableSymbol } from "../assertable.js";
 
 export const toRerender: MatcherFunction<[options?: NextRenderOptions]> =
   async function (actual, options) {
-    const _profiler = actual as
-      | Profiler<any>
-      | ProfiledComponent<any, any>
-      | ProfiledHook<any, any>;
-    const profiler = "Profiler" in _profiler ? _profiler.Profiler : _profiler;
+    const _profiler = actual as RenderStream<any> | Assertable;
+    const profiler =
+      assertableSymbol in _profiler ? _profiler[assertableSymbol] : _profiler;
     const hint = this.utils.matcherHint("toRerender", "ProfiledComponent", "");
     let pass = true;
     try {
@@ -44,11 +44,9 @@ const failed = {};
 export const toRenderExactlyTimes: MatcherFunction<
   [times: number, options?: NextRenderOptions]
 > = async function (actual, times, optionsPerRender) {
-  const _profiler = actual as
-    | Profiler<any>
-    | ProfiledComponent<any, any>
-    | ProfiledHook<any, any>;
-  const profiler = "Profiler" in _profiler ? _profiler.Profiler : _profiler;
+  const _profiler = actual as RenderStream<any> | Assertable;
+  const profiler =
+    assertableSymbol in _profiler ? _profiler[assertableSymbol] : _profiler;
   const options = { timeout: 100, ...optionsPerRender };
   const hint = this.utils.matcherHint("toRenderExactlyTimes");
   let pass = true;

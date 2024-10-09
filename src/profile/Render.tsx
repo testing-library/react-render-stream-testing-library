@@ -13,7 +13,6 @@ import { within, screen } from "@testing-library/dom";
 import { JSDOM, VirtualConsole } from "jsdom";
 import { applyStackTrace, captureStackTrace } from "./traces.js";
 
-/** @internal */
 export interface BaseRender {
   id: string;
   phase: "mount" | "update" | "nested-update";
@@ -28,7 +27,7 @@ export interface BaseRender {
 }
 
 type Screen = typeof screen;
-/** @internal */
+
 export type SyncScreen = {
   [K in keyof Screen]: K extends `find${string}`
     ? {
@@ -38,7 +37,6 @@ export type SyncScreen = {
     : Screen[K];
 };
 
-/** @internal */
 export interface Render<Snapshot> extends BaseRender {
   /**
    * The snapshot, as returned by the `takeSnapshot` option of `profile`.
@@ -66,7 +64,6 @@ export interface Render<Snapshot> extends BaseRender {
   renderedComponents: Array<string | React.ComponentType>;
 }
 
-/** @internal */
 export class RenderInstance<Snapshot> implements Render<Snapshot> {
   id: string;
   phase: "mount" | "update" | "nested-update";
@@ -138,7 +135,7 @@ export class RenderInstance<Snapshot> implements Render<Snapshot> {
     return () => snapScreen;
   }
 }
-/** @internal */
+
 export function errorOnDomInteraction() {
   const events: Array<keyof DocumentEventMap> = [
     "auxclick",

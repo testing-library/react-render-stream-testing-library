@@ -18,7 +18,7 @@
     "allowSyntheticDefaultImports": true,
     "paths": {
       "@testing-library/react-render-stream": [
-        "./src/profile/index.ts"
+        "./src/index.ts"
       ]
     }
   },
