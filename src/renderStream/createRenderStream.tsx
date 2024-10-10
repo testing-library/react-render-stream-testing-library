@@ -2,7 +2,6 @@ import * as React from "rehackt";
 
 import type { Render, BaseRender } from "./Render.js";
 import { RenderInstance } from "./Render.js";
-import { applyStackTrace, captureStackTrace } from "./traces.js";
 import type { RenderStreamContextValue } from "./context.js";
 import {
   RenderStreamContextProvider,
@@ -16,12 +15,8 @@ export type ValidSnapshot =
   | void
   | (object & { /* not a function */ call?: never });
 
-/** only used for passing around data internally */
-const _stackTrace = Symbol();
-
 export interface NextRenderOptions {
   timeout?: number;
-  [_stackTrace]?: string;
 }
 
 interface ReplaceSnapshot<Snapshot> {
@@ -263,10 +258,9 @@ export function createRenderStream<Snapshot extends ValidSnapshot = void>({
 
         return render;
       }
-      return stream.waitForNextRender({
-        [_stackTrace]: captureStackTrace(stream.peekRender),
-        ...options,
-      });
+      return stream
+        .waitForNextRender(options)
+        .catch(rethrowWithCapturedStackTrace(stream.peekRender));
     },
     takeRender: markAssertable(async function takeRender(
       options: NextRenderOptions = {}
@@ -280,10 +274,12 @@ export function createRenderStream<Snapshot extends ValidSnapshot = void>({
 
       try {
         return await stream.peekRender({
-          [_stackTrace]: captureStackTrace(stream.takeRender),
           ...options,
         });
       } catch (e) {
+        if (e instanceof Object) {
+          Error.captureStackTrace(e, stream.takeRender);
+        }
         error = e;
         throw e;
       } finally {
@@ -313,11 +309,7 @@ export function createRenderStream<Snapshot extends ValidSnapshot = void>({
       }
       return render;
     },
-    waitForNextRender({
-      timeout = 1000,
-      // capture the stack trace here so its stack trace is as close to the calling code as possible
-      [_stackTrace]: stackTrace = captureStackTrace(stream.waitForNextRender),
-    }: NextRenderOptions = {}) {
+    waitForNextRender({ timeout = 1000 }: NextRenderOptions = {}) {
       if (!nextRender) {
         nextRender = Promise.race<Render<Snapshot>>([
           new Promise<Render<Snapshot>>((resolve, reject) => {
@@ -326,9 +318,9 @@ export function createRenderStream<Snapshot extends ValidSnapshot = void>({
           }),
           new Promise<Render<Snapshot>>((_, reject) =>
             setTimeout(() => {
-              reject(
-                applyStackTrace(new WaitForRenderTimeoutError(), stackTrace)
-              );
+              const error = new WaitForRenderTimeoutError();
+              Error.captureStackTrace(error, stream.waitForNextRender);
+              reject(error);
               resetNextRender();
             }, timeout)
           ),
@@ -344,6 +336,7 @@ export function createRenderStream<Snapshot extends ValidSnapshot = void>({
 export class WaitForRenderTimeoutError extends Error {
   constructor() {
     super("Exceeded timeout waiting for next render.");
+    this.name = "WaitForRenderTimeoutError";
     Object.setPrototypeOf(this, new.target.prototype);
   }
 }
@@ -380,4 +373,13 @@ export function useTrackRenders({ name }: { name?: string } = {}) {
   React.useLayoutEffect(() => {
     ctx.renderedComponents.unshift(component);
   });
+}
+
+function rethrowWithCapturedStackTrace(constructorOpt: Function | undefined) {
+  return function (error: unknown) {
+    if (error instanceof Object) {
+      Error.captureStackTrace(error, constructorOpt);
+    }
+    throw error;
+  };
 }

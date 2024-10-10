@@ -11,7 +11,6 @@ As we only use this file in our internal tests, we can safely ignore it.
 
 import { within, screen } from "@testing-library/dom";
 import { JSDOM, VirtualConsole } from "jsdom";
-import { applyStackTrace, captureStackTrace } from "./traces.js";
 
 export interface BaseRender {
   id: string;
@@ -97,9 +96,8 @@ export class RenderInstance<Snapshot> implements Render<Snapshot> {
     }
 
     const virtualConsole = new VirtualConsole();
-    const stackTrace = captureStackTrace("RenderInstance.get");
     virtualConsole.on("jsdomError", (error: any) => {
-      throw applyStackTrace(error, stackTrace);
+      throw error;
     });
 
     const snapDOM = new JSDOM(this.stringifiedDOM, {
