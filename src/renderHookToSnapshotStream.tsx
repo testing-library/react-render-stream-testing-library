@@ -3,7 +3,7 @@ import { createRenderStream } from "./renderStream/createRenderStream.js";
 import type { NextRenderOptions } from "./renderStream/createRenderStream.js";
 
 import { Render } from "./renderStream/Render.js";
-import { createElement } from "react";
+import { createElement } from "rehackt";
 import { Assertable, assertableSymbol, markAssertable } from "./assertable.js";
 
 export interface SnapshotStream<Snapshot, Props> extends Assertable {

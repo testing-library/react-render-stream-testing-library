@@ -221,15 +221,12 @@ export function createRenderStream<Snapshot extends ValidSnapshot = void>({
     return baseRender(ui, {
       ...options,
       wrapper: (props) => {
-        let elem: React.ReactNode = React.createElement(
-          Wrapper,
-          undefined,
-          props.children
+        const ParentWrapper = options?.wrapper || React.Fragment;
+        return (
+          <ParentWrapper>
+            <Wrapper>{props.children}</Wrapper>
+          </ParentWrapper>
         );
-        if (options?.wrapper) {
-          elem = React.createElement(options.wrapper, undefined, elem);
-        }
-        return elem;
       },
     });
   }) as typeof baseRender;
@@ -358,7 +355,7 @@ export function useTrackRenders({ name }: { name?: string } = {}) {
 
   if (!component) {
     throw new Error(
-      "useTrackRender: Unable to determine component. Please ensure the hook is called inside a rendered component or provide a `name` option."
+      "useTrackRenders: Unable to determine component. Please ensure the hook is called inside a rendered component or provide a `name` option."
     );
   }
 
@@ -366,7 +363,7 @@ export function useTrackRenders({ name }: { name?: string } = {}) {
 
   if (!ctx) {
     throw new Error(
-      "useTrackComponentRender: A Render Stream must be created and rendered to track component renders"
+      "useTrackRenders: A Render Stream must be created and rendered to track component renders"
     );
   }
 
