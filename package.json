@@ -56,6 +56,7 @@
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.16.4",
     "@jest/globals": "^29.7.0",
+    "@testing-library/user-event": "^14.5.2",
     "@tsconfig/recommended": "^1.0.7",
     "@types/jsdom": "^21.1.7",
     "@types/react": "^18",
@@ -67,6 +68,8 @@
     "publint": "^0.2.11",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "react-error-boundary": "^4.0.13",
+    "ts-jest-resolver": "^2.0.1",
     "tsup": "^8.3.0",
     "typescript": "^5.6.2"
   },
@@ -82,7 +85,7 @@
     "prepack": "yarn build",
     "format": "kcd-scripts format",
     "lint": "kcd-scripts lint --config .eslintrc.cjs",
-    "test": "kcd-scripts test --passWithNoTests",
+    "test": "kcd-scripts test --config jest.config.cjs",
     "verify": "attw --pack . && publint",
     "typecheck": "kcd-scripts typecheck --build",
     "validate": "CI=true kcd-scripts validate verify,lint,typecheck,test"

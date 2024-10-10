@@ -9,13 +9,22 @@
     "declaration": true,
     "sourceMap": true,
     "jsx": "react",
+    "allowJs": true,
     "declarationMap": true,
-    "types": ["react", "node"],
+    "types": [
+      "react",
+      "node"
+    ],
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "paths": {
-      "@testing-library/react-render-stream": ["./src/index.ts"]
+      "@testing-library/react-render-stream": [
+        "./src/index.ts"
+      ]
     }
   },
-  "include": ["src"]
+  "include": [
+    "src",
+    "tests"
+  ]
 }

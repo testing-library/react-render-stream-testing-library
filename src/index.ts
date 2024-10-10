@@ -6,9 +6,9 @@ export type {
 } from './renderStream/createRenderStream.js'
 export {
   createRenderStream,
-  useTrackRenders,
   WaitForRenderTimeoutError,
 } from './renderStream/createRenderStream.js'
+export {useTrackRenders} from './renderStream/useTrackRenders.js'
 
 export type {SyncScreen} from './renderStream/Render.js'
 
