@@ -1,33 +1,33 @@
 import * as React from "rehackt";
 
-export interface ProfilerContextValue {
+export interface RenderStreamContextValue {
   renderedComponents: Array<React.ComponentType | string>;
 }
 
-const ProfilerContext = React.createContext<ProfilerContextValue | undefined>(
-  undefined
-);
+const RenderStreamContext = React.createContext<
+  RenderStreamContextValue | undefined
+>(undefined);
 
-export function ProfilerContextProvider({
+export function RenderStreamContextProvider({
   children,
   value,
 }: {
   children: React.ReactNode;
-  value: ProfilerContextValue;
+  value: RenderStreamContextValue;
 }) {
-  const parentContext = useProfilerContext();
+  const parentContext = useRenderStreamContext();
 
   if (parentContext) {
-    throw new Error("Profilers should not be nested in the same tree");
+    throw new Error("Render streams should not be nested in the same tree");
   }
 
   return (
-    <ProfilerContext.Provider value={value}>
+    <RenderStreamContext.Provider value={value}>
       {children}
-    </ProfilerContext.Provider>
+    </RenderStreamContext.Provider>
   );
 }
 
-export function useProfilerContext() {
-  return React.useContext(ProfilerContext);
+export function useRenderStreamContext() {
+  return React.useContext(RenderStreamContext);
 }

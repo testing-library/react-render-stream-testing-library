@@ -3,8 +3,11 @@ import * as React from "rehackt";
 import type { Render, BaseRender } from "./Render.js";
 import { RenderInstance } from "./Render.js";
 import { applyStackTrace, captureStackTrace } from "./traces.js";
-import type { ProfilerContextValue } from "./context.js";
-import { ProfilerContextProvider, useProfilerContext } from "./context.js";
+import type { RenderStreamContextValue } from "./context.js";
+import {
+  RenderStreamContextProvider,
+  useRenderStreamContext,
+} from "./context.js";
 import { disableActWarnings } from "./disableActWarnings.js";
 import { render as baseRender, RenderOptions } from "@testing-library/react";
 import { Assertable, markAssertable } from "../assertable.js";
@@ -87,7 +90,7 @@ export interface RenderStreamWithRenderFn<Snapshot extends ValidSnapshot>
   render: typeof baseRender;
 }
 
-export type ProfilerOptions<Snapshot extends ValidSnapshot> = {
+export type RenderStreamOptions<Snapshot extends ValidSnapshot> = {
   onRender?: (
     info: BaseRender & {
       snapshot: Snapshot;
@@ -109,7 +112,7 @@ export function createRenderStream<Snapshot extends ValidSnapshot = void>({
   snapshotDOM = false,
   initialSnapshot,
   skipNonTrackingRenders,
-}: ProfilerOptions<Snapshot> = {}): RenderStreamWithRenderFn<Snapshot> {
+}: RenderStreamOptions<Snapshot> = {}): RenderStreamWithRenderFn<Snapshot> {
   let nextRender: Promise<Render<Snapshot>> | undefined;
   let resolveNextRender: ((render: Render<Snapshot>) => void) | undefined;
   let rejectNextRender: ((error: unknown) => void) | undefined;
@@ -144,7 +147,7 @@ export function createRenderStream<Snapshot extends ValidSnapshot = void>({
     }));
   };
 
-  const profilerContext: ProfilerContextValue = {
+  const profilerContext: RenderStreamContextValue = {
     renderedComponents: [],
   };
 
@@ -214,11 +217,11 @@ export function createRenderStream<Snapshot extends ValidSnapshot = void>({
   let iteratorPosition = 0;
   function Wrapper({ children }: { children: React.ReactNode }) {
     return (
-      <ProfilerContextProvider value={profilerContext}>
+      <RenderStreamContextProvider value={profilerContext}>
         <React.Profiler id="test" onRender={profilerOnRender}>
           {children}
         </React.Profiler>
-      </ProfilerContextProvider>
+      </RenderStreamContextProvider>
     );
   }
 
@@ -376,7 +379,7 @@ export function useTrackRenders({ name }: { name?: string } = {}) {
     );
   }
 
-  const ctx = useProfilerContext();
+  const ctx = useRenderStreamContext();
 
   if (!ctx) {
     throw new Error(

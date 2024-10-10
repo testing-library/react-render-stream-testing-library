@@ -4,20 +4,19 @@ import {
 } from "@testing-library/react";
 import {
   createRenderStream,
-  ProfiledComponentFields,
-  ProfiledComponentOnlyFields,
-  ProfilerOptions,
+  RenderStreamOptions,
+  RenderStream,
   ValidSnapshot,
 } from "./profile/profile.js";
 
 type RenderOptions<Snapshot extends ValidSnapshot = void> = BaseOptions &
-  ProfilerOptions<Snapshot>;
+  RenderStreamOptions<Snapshot>;
 
-type RenderResult<Snapshot extends ValidSnapshot = void> =
-  ProfiledComponentFields<Snapshot> &
-    ProfiledComponentOnlyFields<Snapshot> & {
-      renderResultPromise: Promise<BaseResult>;
-    };
+export interface RenderStreamWithRenderResult<
+  Snapshot extends ValidSnapshot = void,
+> extends RenderStream<Snapshot> {
+  renderResultPromise: Promise<BaseResult>;
+}
 
 /**
  * Render into a container which is appended to document.body. It should be used with cleanup.
@@ -32,13 +31,16 @@ export function renderToRenderStream<Snapshot extends ValidSnapshot = void>(
     skipNonTrackingRenders,
     ...options
   }: RenderOptions<Snapshot> = {}
-): RenderResult<Snapshot> {
+): RenderStreamWithRenderResult<Snapshot> {
   const { render, ...stream } = createRenderStream<Snapshot>({
     onRender,
     snapshotDOM,
     initialSnapshot,
     skipNonTrackingRenders,
   });
+  // `render` needs to be called asynchronously here, because the definition of `ui`
+  // might contain components that reference the return value of `renderToRenderStream`
+  // itself, e.g. `replaceSnapshot` or `mergeSnapshot`.
   const renderResultPromise = Promise.resolve().then(() => render(ui, options));
   return { ...stream, renderResultPromise };
 }

@@ -8,7 +8,7 @@ import { Render } from "./profile/Render.js";
 import { createElement } from "react";
 import { Assertable, assertableSymbol, markAssertable } from "./assertable.js";
 
-export interface ProfiledHook<Snapshot extends ValidSnapshot>
+export interface SnapshotStream<Snapshot extends ValidSnapshot, Props>
   extends Assertable {
   /**
    * An array of all renders that have happened so far.
@@ -44,11 +44,6 @@ export interface ProfiledHook<Snapshot extends ValidSnapshot>
    * Does not advance the render iterator.
    */
   waitForNextSnapshot(options?: NextRenderOptions): Promise<Snapshot>;
-}
-
-interface HookSnapshotStream<Props, ReturnValue extends ValidSnapshot>
-  extends ProfiledHook<ReturnValue>,
-    Assertable {
   rerender: (rerenderCallbackProps: Props) => void;
   unmount: () => void;
 }
@@ -59,7 +54,7 @@ export function renderHookToSnapshotStream<
 >(
   renderCallback: (props: Props) => ReturnValue,
   { initialProps, ...options }: RenderHookOptions<Props> = {}
-): HookSnapshotStream<Props, ReturnValue> {
+): SnapshotStream<ReturnValue, Props> {
   const { render, ...stream } = createRenderStream<ReturnValue>();
 
   const ProfiledHook: React.FC<Props> = (props) => {
