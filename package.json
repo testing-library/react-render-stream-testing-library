@@ -82,7 +82,10 @@
     "prepack": "yarn build",
     "format": "kcd-scripts format",
     "lint": "kcd-scripts lint --config .eslintrc.cjs",
-    "verify": "attw --pack . && publint"
+    "test": "kcd-scripts test --passWithNoTests",
+    "verify": "attw --pack . && publint",
+    "typecheck": "kcd-scripts typecheck --build",
+    "validate": "CI=true kcd-scripts validate verify,lint,typecheck,test"
   },
   "packageManager": "yarn@4.5.0",
   "resolutions": {
