@@ -170,7 +170,7 @@ test('specifying the `name` option', async () => {
     const {renderedComponents} = await takeRender()
     expect(renderedComponents).toEqual([
       'NamedComponent:Darth Vader',
-      // TODO: investigate why the order of sibling components is inverted and if it's technically possible to change that
+      // this relies on the order of `useLayoutEffect` being executed, we have no way to influence that siblings seem "backwards" here
       'NamedComponent:Leia',
       'NamedComponent:Luke',
       'NamedComponent:R2D2',

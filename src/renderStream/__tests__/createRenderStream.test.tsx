@@ -183,3 +183,65 @@ describe('replaceSnapshot', () => {
     })
   })
 })
+
+describe('onRender', () => {
+  test('basic functionality', async () => {
+    function Counter() {
+      const [value, setValue] = React.useState(0)
+      replaceSnapshot({value})
+      return (
+        <CounterForm value={value} onIncrement={() => setValue(v => v + 1)} />
+      )
+    }
+
+    const {takeRender, replaceSnapshot, render} = createRenderStream<{
+      value: number
+    }>({
+      onRender(info) {
+        // can use expect here
+        expect(info.count).toBe(info.snapshot.value + 1)
+      },
+    })
+    const utils = render(<Counter />)
+    const incrementButton = utils.getByText('Increment')
+    await userEvent.click(incrementButton)
+    await userEvent.click(incrementButton)
+    await takeRender()
+    await takeRender()
+    await takeRender()
+  })
+
+  test('errors in `onRender` propagate to the associated `takeRender` call', async () => {
+    function Counter() {
+      const [value, setValue] = React.useState(0)
+      return (
+        <CounterForm value={value} onIncrement={() => setValue(v => v + 1)} />
+      )
+    }
+
+    const {takeRender, render} = createRenderStream({
+      onRender(info) {
+        expect(info.count).toBe(1)
+      },
+    })
+
+    const utils = render(<Counter />)
+    const incrementButton = utils.getByText('Increment')
+    await userEvent.click(incrementButton)
+    await userEvent.click(incrementButton)
+    await takeRender()
+    const error = await takeRender()
+      .then(() => undefined as never)
+      .catch(e => e as Error)
+
+    // eslint-disable-next-line no-control-regex
+    const consoleColors = /\x1b\[\d+m/g
+
+    expect(error.message.replace(consoleColors, '')).toMatchInlineSnapshot(`
+expect(received).toBe(expected) // Object.is equality
+
+Expected: 1
+Received: 2
+`)
+  })
+})
