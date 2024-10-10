@@ -38,13 +38,11 @@ interface MergeSnapshot<Snapshot> {
   ): void;
 }
 
-export interface ProfiledComponentOnlyFields<Snapshot> {
+export interface RenderStream<Snapshot extends ValidSnapshot> {
   // Allows for partial updating of the snapshot by shallow merging the results
   mergeSnapshot: MergeSnapshot<Snapshot>;
   // Performs a full replacement of the snapshot
   replaceSnapshot: ReplaceSnapshot<Snapshot>;
-}
-export interface ProfiledComponentFields<Snapshot> {
   /**
    * An array of all renders that have happened so far.
    * Errors thrown during component render will be captured here, too.
@@ -80,10 +78,6 @@ export interface ProfiledComponentFields<Snapshot> {
    */
   waitForNextRender(options?: NextRenderOptions): Promise<Render<Snapshot>>;
 }
-
-export interface RenderStream<Snapshot extends ValidSnapshot>
-  extends ProfiledComponentFields<Snapshot>,
-    ProfiledComponentOnlyFields<Snapshot> {}
 
 export interface RenderStreamWithRenderFn<Snapshot extends ValidSnapshot>
   extends RenderStream<Snapshot> {
@@ -172,7 +166,7 @@ export function createRenderStream<Snapshot extends ValidSnapshot = void>({
       baseDuration,
       startTime,
       commitTime,
-      count: Profiler.renders.length + 1,
+      count: stream.renders.length + 1,
     };
     try {
       /*
@@ -200,12 +194,12 @@ export function createRenderStream<Snapshot extends ValidSnapshot = void>({
         profilerContext.renderedComponents
       );
       profilerContext.renderedComponents = [];
-      Profiler.renders.push(render);
+      stream.renders.push(render);
       resolveNextRender?.(render);
     } catch (error) {
-      Profiler.renders.push({
+      stream.renders.push({
         phase: "snapshotError",
-        count: Profiler.renders.length,
+        count: stream.renders.length,
         error,
       });
       rejectNextRender?.(error);
@@ -245,110 +239,106 @@ export function createRenderStream<Snapshot extends ValidSnapshot = void>({
     });
   }) as typeof baseRender;
 
-  let Profiler: RenderStreamWithRenderFn<Snapshot> = {} as any;
-  Profiler = Object.assign(
-    Profiler as {},
-    {
-      replaceSnapshot,
-      mergeSnapshot,
-    } satisfies ProfiledComponentOnlyFields<Snapshot>,
-    {
-      renders: new Array<
-        | Render<Snapshot>
-        | { phase: "snapshotError"; count: number; error: unknown }
-      >(),
-      totalRenderCount() {
-        return Profiler.renders.length;
-      },
-      async peekRender(options: NextRenderOptions = {}) {
-        if (iteratorPosition < Profiler.renders.length) {
-          const render = Profiler.renders[iteratorPosition];
-
-          if (render.phase === "snapshotError") {
-            throw render.error;
-          }
-
-          return render;
-        }
-        return Profiler.waitForNextRender({
-          [_stackTrace]: captureStackTrace(Profiler.peekRender),
-          ...options,
-        });
-      },
-      takeRender: markAssertable(async function takeRender(
-        options: NextRenderOptions = {}
-      ) {
-        // In many cases we do not control the resolution of the suspended
-        // promise which results in noisy tests when the profiler due to
-        // repeated act warnings.
-        using _disabledActWarnings = disableActWarnings();
-
-        let error: unknown = undefined;
-
-        try {
-          return await Profiler.peekRender({
-            [_stackTrace]: captureStackTrace(Profiler.takeRender),
-            ...options,
-          });
-        } catch (e) {
-          error = e;
-          throw e;
-        } finally {
-          if (!(error && error instanceof WaitForRenderTimeoutError)) {
-            iteratorPosition++;
-          }
-        }
-      }, Profiler),
-      getCurrentRender() {
-        // The "current" render should point at the same render that the most
-        // recent `takeRender` call returned, so we need to get the "previous"
-        // iterator position, otherwise `takeRender` advances the iterator
-        // to the next render. This means we need to call `takeRender` at least
-        // once before we can get a current render.
-        const currentPosition = iteratorPosition - 1;
-
-        if (currentPosition < 0) {
-          throw new Error(
-            "No current render available. You need to call `takeRender` before you can get the current render."
-          );
-        }
-
-        const render = Profiler.renders[currentPosition];
+  // creating the object first and then assigning in all the properties
+  // allows keeping the object instance for reference while the members are
+  // created, which is important for the `markAssertable` function
+  let stream: RenderStreamWithRenderFn<Snapshot> = {} as any;
+  Object.assign<typeof stream, typeof stream>(stream, {
+    replaceSnapshot,
+    mergeSnapshot,
+    renders: new Array<
+      | Render<Snapshot>
+      | { phase: "snapshotError"; count: number; error: unknown }
+    >(),
+    totalRenderCount() {
+      return stream.renders.length;
+    },
+    async peekRender(options: NextRenderOptions = {}) {
+      if (iteratorPosition < stream.renders.length) {
+        const render = stream.renders[iteratorPosition];
 
         if (render.phase === "snapshotError") {
           throw render.error;
         }
+
         return render;
-      },
-      waitForNextRender({
-        timeout = 1000,
-        // capture the stack trace here so its stack trace is as close to the calling code as possible
-        [_stackTrace]: stackTrace = captureStackTrace(
-          Profiler.waitForNextRender
-        ),
-      }: NextRenderOptions = {}) {
-        if (!nextRender) {
-          nextRender = Promise.race<Render<Snapshot>>([
-            new Promise<Render<Snapshot>>((resolve, reject) => {
-              resolveNextRender = resolve;
-              rejectNextRender = reject;
-            }),
-            new Promise<Render<Snapshot>>((_, reject) =>
-              setTimeout(() => {
-                reject(
-                  applyStackTrace(new WaitForRenderTimeoutError(), stackTrace)
-                );
-                resetNextRender();
-              }, timeout)
-            ),
-          ]);
+      }
+      return stream.waitForNextRender({
+        [_stackTrace]: captureStackTrace(stream.peekRender),
+        ...options,
+      });
+    },
+    takeRender: markAssertable(async function takeRender(
+      options: NextRenderOptions = {}
+    ) {
+      // In many cases we do not control the resolution of the suspended
+      // promise which results in noisy tests when the profiler due to
+      // repeated act warnings.
+      using _disabledActWarnings = disableActWarnings();
+
+      let error: unknown = undefined;
+
+      try {
+        return await stream.peekRender({
+          [_stackTrace]: captureStackTrace(stream.takeRender),
+          ...options,
+        });
+      } catch (e) {
+        error = e;
+        throw e;
+      } finally {
+        if (!(error && error instanceof WaitForRenderTimeoutError)) {
+          iteratorPosition++;
         }
-        return nextRender;
-      },
-    } satisfies ProfiledComponentFields<Snapshot>,
-    { render }
-  );
-  return Profiler;
+      }
+    }, stream),
+    getCurrentRender() {
+      // The "current" render should point at the same render that the most
+      // recent `takeRender` call returned, so we need to get the "previous"
+      // iterator position, otherwise `takeRender` advances the iterator
+      // to the next render. This means we need to call `takeRender` at least
+      // once before we can get a current render.
+      const currentPosition = iteratorPosition - 1;
+
+      if (currentPosition < 0) {
+        throw new Error(
+          "No current render available. You need to call `takeRender` before you can get the current render."
+        );
+      }
+
+      const render = stream.renders[currentPosition];
+
+      if (render.phase === "snapshotError") {
+        throw render.error;
+      }
+      return render;
+    },
+    waitForNextRender({
+      timeout = 1000,
+      // capture the stack trace here so its stack trace is as close to the calling code as possible
+      [_stackTrace]: stackTrace = captureStackTrace(stream.waitForNextRender),
+    }: NextRenderOptions = {}) {
+      if (!nextRender) {
+        nextRender = Promise.race<Render<Snapshot>>([
+          new Promise<Render<Snapshot>>((resolve, reject) => {
+            resolveNextRender = resolve;
+            rejectNextRender = reject;
+          }),
+          new Promise<Render<Snapshot>>((_, reject) =>
+            setTimeout(() => {
+              reject(
+                applyStackTrace(new WaitForRenderTimeoutError(), stackTrace)
+              );
+              resetNextRender();
+            }, timeout)
+          ),
+        ]);
+      }
+      return nextRender;
+    },
+    render,
+  });
+  return stream;
 }
 
 export class WaitForRenderTimeoutError extends Error {
