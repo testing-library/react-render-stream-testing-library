@@ -1,21 +1,17 @@
 import { RenderHookOptions } from "@testing-library/react";
-import {
-  createRenderStream,
-  NextRenderOptions,
-  ValidSnapshot,
-} from "./profile/profile.js";
+import { createRenderStream, NextRenderOptions } from "./profile/profile.js";
 import { Render } from "./profile/Render.js";
 import { createElement } from "react";
 import { Assertable, assertableSymbol, markAssertable } from "./assertable.js";
 
-export interface SnapshotStream<Snapshot extends ValidSnapshot, Props>
-  extends Assertable {
+export interface SnapshotStream<Snapshot, Props> extends Assertable {
   /**
    * An array of all renders that have happened so far.
    * Errors thrown during component render will be captured here, too.
    */
   renders: Array<
-    Render<Snapshot> | { phase: "snapshotError"; count: number; error: unknown }
+    | Render<{ value: Snapshot }>
+    | { phase: "snapshotError"; count: number; error: unknown }
   >;
   /**
    * Peeks the next render from the current iterator position, without advancing the iterator.
@@ -48,27 +44,24 @@ export interface SnapshotStream<Snapshot extends ValidSnapshot, Props>
   unmount: () => void;
 }
 
-export function renderHookToSnapshotStream<
-  ReturnValue extends ValidSnapshot,
-  Props extends {},
->(
+export function renderHookToSnapshotStream<ReturnValue, Props extends {}>(
   renderCallback: (props: Props) => ReturnValue,
   { initialProps, ...options }: RenderHookOptions<Props> = {}
 ): SnapshotStream<ReturnValue, Props> {
-  const { render, ...stream } = createRenderStream<ReturnValue>();
+  const { render, ...stream } = createRenderStream<{ value: ReturnValue }>();
 
-  const ProfiledHook: React.FC<Props> = (props) => {
-    stream.replaceSnapshot(renderCallback(props));
+  const HookComponent: React.FC<Props> = (props) => {
+    stream.replaceSnapshot({ value: renderCallback(props) });
     return null;
   };
 
   const { rerender: baseRerender, unmount } = render(
-    createElement(ProfiledHook, initialProps),
+    createElement(HookComponent, initialProps),
     options
   );
 
   function rerender(rerenderCallbackProps: Props) {
-    return baseRerender(createElement(ProfiledHook, rerenderCallbackProps));
+    return baseRerender(createElement(HookComponent, rerenderCallbackProps));
   }
 
   return {
@@ -76,16 +69,16 @@ export function renderHookToSnapshotStream<
     renders: stream.renders,
     totalSnapshotCount: stream.totalRenderCount,
     async peekSnapshot(options) {
-      return (await stream.peekRender(options)).snapshot;
+      return (await stream.peekRender(options)).snapshot.value;
     },
     takeSnapshot: markAssertable(async function takeSnapshot(options) {
-      return (await stream.takeRender(options)).snapshot;
+      return (await stream.takeRender(options)).snapshot.value;
     }, stream),
     getCurrentSnapshot() {
-      return stream.getCurrentRender().snapshot;
+      return stream.getCurrentRender().snapshot.value;
     },
     async waitForNextSnapshot(options) {
-      return (await stream.waitForNextRender(options)).snapshot;
+      return (await stream.waitForNextRender(options)).snapshot.value;
     },
     rerender,
     unmount,
