@@ -61,6 +61,7 @@
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "expect": "^29.7.0",
+    "kcd-scripts": "^16.0.0",
     "pkg-pr-new": "^0.0.29",
     "prettier": "^3.3.3",
     "publint": "^0.2.11",
@@ -79,7 +80,15 @@
     "build": "tsup",
     "pkg-pr-new-publish": "yarn build && pkg-pr-new publish --no-template",
     "prepack": "yarn build",
-    "verify": "attw --pack . && publint"
+    "format": "kcd-scripts format",
+    "lint": "kcd-scripts lint --config .eslintrc.cjs",
+    "test": "kcd-scripts test --passWithNoTests",
+    "verify": "attw --pack . && publint",
+    "typecheck": "kcd-scripts typecheck --build",
+    "validate": "CI=true kcd-scripts validate verify,lint,typecheck,test"
   },
-  "packageManager": "yarn@4.5.0"
+  "packageManager": "yarn@4.5.0",
+  "resolutions": {
+    "eslint-config-kentcdodds": "^21.0.0"
+  }
 }

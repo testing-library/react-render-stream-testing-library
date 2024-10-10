@@ -1,21 +1,21 @@
 import {
   type RenderOptions as BaseOptions,
   type RenderResult as BaseResult,
-} from "@testing-library/react";
-import { createRenderStream } from "./renderStream/createRenderStream.js";
-import type {
-  RenderStreamOptions,
-  RenderStream,
-  ValidSnapshot,
-} from "./renderStream/createRenderStream.js";
+} from '@testing-library/react'
+import {
+  createRenderStream,
+  type RenderStreamOptions,
+  type RenderStream,
+  type ValidSnapshot,
+} from './renderStream/createRenderStream.js'
 
 type RenderOptions<Snapshot extends ValidSnapshot = void> = BaseOptions &
-  RenderStreamOptions<Snapshot>;
+  RenderStreamOptions<Snapshot>
 
 export interface RenderStreamWithRenderResult<
   Snapshot extends ValidSnapshot = void,
 > extends RenderStream<Snapshot> {
-  renderResultPromise: Promise<BaseResult>;
+  renderResultPromise: Promise<BaseResult>
 }
 
 /**
@@ -30,17 +30,17 @@ export function renderToRenderStream<Snapshot extends ValidSnapshot = void>(
     initialSnapshot,
     skipNonTrackingRenders,
     ...options
-  }: RenderOptions<Snapshot> = {}
+  }: RenderOptions<Snapshot> = {},
 ): RenderStreamWithRenderResult<Snapshot> {
-  const { render, ...stream } = createRenderStream<Snapshot>({
+  const {render, ...stream} = createRenderStream<Snapshot>({
     onRender,
     snapshotDOM,
     initialSnapshot,
     skipNonTrackingRenders,
-  });
+  })
   // `render` needs to be called asynchronously here, because the definition of `ui`
   // might contain components that reference the return value of `renderToRenderStream`
   // itself, e.g. `replaceSnapshot` or `mergeSnapshot`.
-  const renderResultPromise = Promise.resolve().then(() => render(ui, options));
-  return { ...stream, renderResultPromise };
+  const renderResultPromise = Promise.resolve().then(() => render(ui, options))
+  return {...stream, renderResultPromise}
 }
