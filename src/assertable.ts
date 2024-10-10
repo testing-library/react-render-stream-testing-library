@@ -1,8 +1,8 @@
-import { RenderStream } from "./renderStream/createRenderStream.js";
+import {RenderStream} from './renderStream/createRenderStream.js'
 
 export const assertableSymbol = Symbol.for(
-  "@testing-library/react-render-stream:assertable"
-);
+  '@testing-library/react-render-stream:assertable',
+)
 
 /**
  * A function or object that can be used in assertions, like e.g.
@@ -13,14 +13,14 @@ export const assertableSymbol = Symbol.for(
  ```
  */
 export type Assertable = {
-  [assertableSymbol]: RenderStream<any>;
-};
+  [assertableSymbol]: RenderStream<any>
+}
 
 export function markAssertable<T extends {}>(
   assertable: T,
-  stream: RenderStream<any>
+  stream: RenderStream<any>,
 ): T & Assertable {
   return Object.assign(assertable, {
     [assertableSymbol]: stream,
-  });
+  })
 }

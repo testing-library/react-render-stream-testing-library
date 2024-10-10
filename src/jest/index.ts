@@ -1,11 +1,11 @@
-import { expect } from "@jest/globals";
-import { toRerender, toRenderExactlyTimes } from "./renderStreamMatchers.js";
-import type { RenderStreamMatchers } from "./renderStreamMatchers.js";
+import {expect} from '@jest/globals'
+import {toRerender, toRenderExactlyTimes} from './renderStreamMatchers.js'
+import type {RenderStreamMatchers} from './renderStreamMatchers.js'
 
 expect.extend({
   toRerender,
   toRenderExactlyTimes,
-});
+})
 
 declare global {
   namespace jest {
