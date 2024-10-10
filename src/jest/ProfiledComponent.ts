@@ -14,7 +14,7 @@ export const toRerender: MatcherFunction<[options?: NextRenderOptions]> =
     const _stream = actual as RenderStream<any> | Assertable;
     const stream =
       assertableSymbol in _stream ? _stream[assertableSymbol] : _stream;
-    const hint = this.utils.matcherHint("toRerender", "ProfiledComponent", "");
+    const hint = this.utils.matcherHint("toRerender");
     let pass = true;
     try {
       await stream.peekRender({ timeout: 100, ...options });

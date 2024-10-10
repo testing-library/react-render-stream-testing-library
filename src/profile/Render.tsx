@@ -39,13 +39,12 @@ export type SyncScreen = {
 
 export interface Render<Snapshot> extends BaseRender {
   /**
-   * The snapshot, as returned by the `takeSnapshot` option of `profile`.
-   * (If using `profileHook`, this is the return value of the hook.)
+   * The snapshot, as returned by the `takeSnapshot` option of `createRenderStream`.
    */
   snapshot: Snapshot;
   /**
    * A DOM snapshot of the rendered component, if the `snapshotDOM`
-   * option of `profile` was enabled.
+   * option of `createRenderStream` was enabled.
    */
   readonly domSnapshot: HTMLElement;
   /**
