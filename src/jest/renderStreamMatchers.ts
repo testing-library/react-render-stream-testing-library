@@ -9,6 +9,20 @@ import type {
 // this will bundle the `Symbol.for` call twice, but we keep it private
 import { assertableSymbol } from "../assertable.js";
 
+export interface RenderStreamMatchers<R = void, T = {}> {
+  toRerender: T extends RenderStream<any> | Assertable
+    ? (options?: NextRenderOptions) => Promise<R>
+    : {
+        error: "matcher needs to be called on a `takeRender` function, `takeSnapshot` function or `RenderStream` instance";
+      };
+
+  toRenderExactlyTimes: T extends RenderStream<any> | Assertable
+    ? (count: number, options?: NextRenderOptions) => Promise<R>
+    : {
+        error: "matcher needs to be called on a `takeRender` function, `takeSnapshot` function or `RenderStream` instance";
+      };
+}
+
 export const toRerender: MatcherFunction<[options?: NextRenderOptions]> =
   async function (actual, options) {
     const _stream = actual as RenderStream<any> | Assertable;

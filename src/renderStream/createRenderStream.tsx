@@ -141,7 +141,7 @@ export function createRenderStream<Snapshot extends ValidSnapshot = void>({
     }));
   };
 
-  const profilerContext: RenderStreamContextValue = {
+  const renderStreamContext: RenderStreamContextValue = {
     renderedComponents: [],
   };
 
@@ -155,7 +155,7 @@ export function createRenderStream<Snapshot extends ValidSnapshot = void>({
   ) => {
     if (
       skipNonTrackingRenders &&
-      profilerContext.renderedComponents.length === 0
+      renderStreamContext.renderedComponents.length === 0
     ) {
       return;
     }
@@ -191,9 +191,9 @@ export function createRenderStream<Snapshot extends ValidSnapshot = void>({
         baseRender,
         snapshot,
         domSnapshot,
-        profilerContext.renderedComponents
+        renderStreamContext.renderedComponents
       );
-      profilerContext.renderedComponents = [];
+      renderStreamContext.renderedComponents = [];
       stream.renders.push(render);
       resolveNextRender?.(render);
     } catch (error) {
@@ -211,7 +211,7 @@ export function createRenderStream<Snapshot extends ValidSnapshot = void>({
   let iteratorPosition = 0;
   function Wrapper({ children }: { children: React.ReactNode }) {
     return (
-      <RenderStreamContextProvider value={profilerContext}>
+      <RenderStreamContextProvider value={renderStreamContext}>
         <React.Profiler id="test" onRender={profilerOnRender}>
           {children}
         </React.Profiler>
@@ -373,7 +373,7 @@ export function useTrackRenders({ name }: { name?: string } = {}) {
 
   if (!ctx) {
     throw new Error(
-      "useTrackComponentRender: A Profiler must be created and rendered to track component renders"
+      "useTrackComponentRender: A Render Stream must be created and rendered to track component renders"
     );
   }
 

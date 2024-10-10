@@ -3,14 +3,14 @@ export type {
   RenderStream,
   RenderStreamWithRenderFn,
   RenderStreamOptions,
-} from "./profile/profile.js";
+} from "./renderStream/createRenderStream.js";
 export {
   createRenderStream,
   useTrackRenders,
   WaitForRenderTimeoutError,
-} from "./profile/profile.js";
+} from "./renderStream/createRenderStream.js";
 
-export type { SyncScreen } from "./profile/Render.js";
+export type { SyncScreen } from "./renderStream/Render.js";
 
 export { renderToRenderStream } from "./renderToRenderStream.js";
 export type { RenderStreamWithRenderResult } from "./renderToRenderStream.js";

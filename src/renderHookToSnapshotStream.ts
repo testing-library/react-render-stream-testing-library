@@ -1,6 +1,8 @@
 import { RenderHookOptions } from "@testing-library/react";
-import { createRenderStream, NextRenderOptions } from "./profile/profile.js";
-import { Render } from "./profile/Render.js";
+import { createRenderStream } from "./renderStream/createRenderStream.js";
+import type { NextRenderOptions } from "./renderStream/createRenderStream.js";
+
+import { Render } from "./renderStream/Render.js";
 import { createElement } from "react";
 import { Assertable, assertableSymbol, markAssertable } from "./assertable.js";
 
