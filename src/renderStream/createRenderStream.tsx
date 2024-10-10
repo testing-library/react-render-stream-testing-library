@@ -1,16 +1,15 @@
 import * as React from 'rehackt'
 
-import type {Render, BaseRender} from './Render.js'
-import {RenderInstance} from './Render.js'
-import type {RenderStreamContextValue} from './context.js'
-import {RenderStreamContextProvider, useRenderStreamContext} from './context.js'
-import {disableActWarnings} from './disableActWarnings.js'
 import {render as baseRender, RenderOptions} from '@testing-library/react'
 import {Assertable, markAssertable} from '../assertable.js'
+import {RenderInstance, type Render, type BaseRender} from './Render.js'
+import {type RenderStreamContextValue} from './context.js'
+import {RenderStreamContextProvider, useRenderStreamContext} from './context.js'
+import {disableActWarnings} from './disableActWarnings.js'
 
 export type ValidSnapshot =
-  | void
-  | (object & {/* not a function */ call?: never})
+  // eslint-disable-next-line @typescript-eslint/no-invalid-void-type
+  void | (object & {/* not a function */ call?: never})
 
 export interface NextRenderOptions {
   timeout?: number
@@ -47,7 +46,7 @@ export interface RenderStream<Snapshot extends ValidSnapshot> {
    * If no render has happened yet, it will wait for the next render to happen.
    * @throws {WaitForRenderTimeoutError} if no render happens within the timeout
    */
-  peekRender(options?: NextRenderOptions): Promise<Render<Snapshot>>
+  peekRender: (options?: NextRenderOptions) => Promise<Render<Snapshot>>
   /**
    * Iterates to the next render and returns it.
    * If no render has happened yet, it will wait for the next render to happen.
@@ -58,17 +57,17 @@ export interface RenderStream<Snapshot extends ValidSnapshot> {
   /**
    * Returns the total number of renders.
    */
-  totalRenderCount(): number
+  totalRenderCount: () => number
   /**
    * Returns the current render.
    * @throws {Error} if no render has happened yet
    */
-  getCurrentRender(): Render<Snapshot>
+  getCurrentRender: () => Render<Snapshot>
   /**
    * Waits for the next render to happen.
    * Does not advance the render iterator.
    */
-  waitForNextRender(options?: NextRenderOptions): Promise<Render<Snapshot>>
+  waitForNextRender: (options?: NextRenderOptions) => Promise<Render<Snapshot>>
 }
 
 export interface RenderStreamWithRenderFn<Snapshot extends ValidSnapshot>
@@ -93,17 +92,32 @@ export type RenderStreamOptions<Snapshot extends ValidSnapshot> = {
   skipNonTrackingRenders?: boolean
 }
 
+export class WaitForRenderTimeoutError extends Error {
+  constructor() {
+    super('Exceeded timeout waiting for next render.')
+    this.name = 'WaitForRenderTimeoutError'
+    Object.setPrototypeOf(this, new.target.prototype)
+  }
+}
+
 export function createRenderStream<Snapshot extends ValidSnapshot = void>({
   onRender,
   snapshotDOM = false,
   initialSnapshot,
   skipNonTrackingRenders,
 }: RenderStreamOptions<Snapshot> = {}): RenderStreamWithRenderFn<Snapshot> {
-  let nextRender: Promise<Render<Snapshot>> | undefined
-  let resolveNextRender: ((render: Render<Snapshot>) => void) | undefined
-  let rejectNextRender: ((error: unknown) => void) | undefined
+  // creating the object first and then assigning in all the properties
+  // allows keeping the object instance for reference while the members are
+  // created, which is important for the `markAssertable` function
+  const stream = {} as any as RenderStreamWithRenderFn<Snapshot>
+
+  let nextRender: Promise<Render<Snapshot>> | undefined,
+    resolveNextRender: ((render: Render<Snapshot>) => void) | undefined,
+    rejectNextRender: ((error: unknown) => void) | undefined
   function resetNextRender() {
-    nextRender = resolveNextRender = rejectNextRender = undefined
+    nextRender = undefined
+    resolveNextRender = undefined
+    rejectNextRender = undefined
   }
   const snapshotRef = {current: initialSnapshot}
   const replaceSnapshot: ReplaceSnapshot<Snapshot> = snap => {
@@ -116,7 +130,7 @@ export function createRenderStream<Snapshot extends ValidSnapshot = void>({
       snapshotRef.current = snap(
         typeof snapshotRef.current === 'object'
           ? // "cheap best effort" to prevent accidental mutation of the last snapshot
-            {...snapshotRef.current!}
+            {...snapshotRef.current}
           : snapshotRef.current!,
       )
     } else {
@@ -151,7 +165,8 @@ export function createRenderStream<Snapshot extends ValidSnapshot = void>({
     ) {
       return
     }
-    const baseRender = {
+
+    const renderBase = {
       id,
       phase,
       actualDuration,
@@ -169,7 +184,7 @@ export function createRenderStream<Snapshot extends ValidSnapshot = void>({
        * Additionally, we reject the `waitForNextRender` promise.
        */
       onRender?.({
-        ...baseRender,
+        ...renderBase,
         replaceSnapshot,
         mergeSnapshot,
         snapshot: snapshotRef.current!,
@@ -180,7 +195,7 @@ export function createRenderStream<Snapshot extends ValidSnapshot = void>({
         ? window.document.body.innerHTML
         : undefined
       const render = new RenderInstance(
-        baseRender,
+        renderBase,
         snapshot,
         domSnapshot,
         renderStreamContext.renderedComponents,
@@ -218,7 +233,7 @@ export function createRenderStream<Snapshot extends ValidSnapshot = void>({
     return baseRender(ui, {
       ...options,
       wrapper: props => {
-        const ParentWrapper = options?.wrapper || React.Fragment
+        const ParentWrapper = options?.wrapper ?? React.Fragment
         return (
           <ParentWrapper>
             <Wrapper>{props.children}</Wrapper>
@@ -228,10 +243,6 @@ export function createRenderStream<Snapshot extends ValidSnapshot = void>({
     })
   }) as typeof baseRender
 
-  // creating the object first and then assigning in all the properties
-  // allows keeping the object instance for reference while the members are
-  // created, which is important for the `markAssertable` function
-  let stream: RenderStreamWithRenderFn<Snapshot> = {} as any
   Object.assign<typeof stream, typeof stream>(stream, {
     replaceSnapshot,
     mergeSnapshot,
@@ -243,13 +254,13 @@ export function createRenderStream<Snapshot extends ValidSnapshot = void>({
     },
     async peekRender(options: NextRenderOptions = {}) {
       if (iteratorPosition < stream.renders.length) {
-        const render = stream.renders[iteratorPosition]
+        const peekedRender = stream.renders[iteratorPosition]
 
-        if (render.phase === 'snapshotError') {
-          throw render.error
+        if (peekedRender.phase === 'snapshotError') {
+          throw peekedRender.error
         }
 
-        return render
+        return peekedRender
       }
       return stream
         .waitForNextRender(options)
@@ -263,7 +274,7 @@ export function createRenderStream<Snapshot extends ValidSnapshot = void>({
       // repeated act warnings.
       using _disabledActWarnings = disableActWarnings()
 
-      let error: unknown = undefined
+      let error: unknown
 
       try {
         return await stream.peekRender({
@@ -295,12 +306,12 @@ export function createRenderStream<Snapshot extends ValidSnapshot = void>({
         )
       }
 
-      const render = stream.renders[currentPosition]
+      const currentRender = stream.renders[currentPosition]
 
-      if (render.phase === 'snapshotError') {
-        throw render.error
+      if (currentRender.phase === 'snapshotError') {
+        throw currentRender.error
       }
-      return render
+      return currentRender
     },
     waitForNextRender({timeout = 1000}: NextRenderOptions = {}) {
       if (!nextRender) {
@@ -326,20 +337,14 @@ export function createRenderStream<Snapshot extends ValidSnapshot = void>({
   return stream
 }
 
-export class WaitForRenderTimeoutError extends Error {
-  constructor() {
-    super('Exceeded timeout waiting for next render.')
-    this.name = 'WaitForRenderTimeoutError'
-    Object.setPrototypeOf(this, new.target.prototype)
-  }
-}
-
 function resolveR18HookOwner(): React.ComponentType | undefined {
+  /* eslint-disable @typescript-eslint/no-unsafe-member-access */
   return (React as any).__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED
     ?.ReactCurrentOwner?.current?.elementType
 }
 
 function resolveR19HookOwner(): React.ComponentType | undefined {
+  /* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call */
   return (
     React as any
   ).__CLIENT_INTERNALS_DO_NOT_USE_OR_WARN_USERS_THEY_CANNOT_UPGRADE?.A?.getOwner()
@@ -347,7 +352,7 @@ function resolveR19HookOwner(): React.ComponentType | undefined {
 }
 
 export function useTrackRenders({name}: {name?: string} = {}) {
-  const component = name || resolveR18HookOwner() || resolveR19HookOwner()
+  const component = name ?? resolveR18HookOwner() ?? resolveR19HookOwner()
 
   if (!component) {
     throw new Error(
@@ -369,7 +374,7 @@ export function useTrackRenders({name}: {name?: string} = {}) {
 }
 
 function rethrowWithCapturedStackTrace(constructorOpt: Function | undefined) {
-  return function (error: unknown) {
+  return function catchFn(error: unknown) {
     if (error instanceof Object) {
       Error.captureStackTrace(error, constructorOpt)
     }

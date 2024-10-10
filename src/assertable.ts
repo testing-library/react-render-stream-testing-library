@@ -1,4 +1,4 @@
-import {RenderStream} from './renderStream/createRenderStream.js'
+import {type RenderStream} from './renderStream/createRenderStream.js'
 
 export const assertableSymbol = Symbol.for(
   '@testing-library/react-render-stream:assertable',

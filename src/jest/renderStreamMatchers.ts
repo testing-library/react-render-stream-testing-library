@@ -1,9 +1,9 @@
-import type {MatcherFunction} from 'expect'
-import {WaitForRenderTimeoutError} from '@testing-library/react-render-stream'
-import type {
-  Assertable,
-  NextRenderOptions,
-  RenderStream,
+import {MatcherContext, type MatcherFunction} from 'expect'
+import {
+  WaitForRenderTimeoutError,
+  type Assertable,
+  type NextRenderOptions,
+  type RenderStream,
 } from '@testing-library/react-render-stream'
 // explicitly imported the symbol from the internal file
 // this will bundle the `Symbol.for` call twice, but we keep it private
@@ -24,7 +24,7 @@ export interface RenderStreamMatchers<R = void, T = {}> {
 }
 
 export const toRerender: MatcherFunction<[options?: NextRenderOptions]> =
-  async function (actual, options) {
+  async function toRerender(this: MatcherContext, actual, options) {
     const _stream = actual as RenderStream<any> | Assertable
     const stream =
       assertableSymbol in _stream ? _stream[assertableSymbol] : _stream
@@ -44,8 +44,7 @@ export const toRerender: MatcherFunction<[options?: NextRenderOptions]> =
       pass,
       message() {
         return (
-          hint +
-          `\n\nExpected component to${pass ? ' not' : ''} rerender, ` +
+          `${hint}\n\nExpected component to${pass ? ' not' : ''} rerender, ` +
           `but it did${pass ? '' : ' not'}.`
         )
       },
@@ -53,11 +52,16 @@ export const toRerender: MatcherFunction<[options?: NextRenderOptions]> =
   }
 
 /** to be thrown to "break" test execution and fail it */
-const failed = {}
+const failed = new Error()
 
 export const toRenderExactlyTimes: MatcherFunction<
   [times: number, options?: NextRenderOptions]
-> = async function (actual, times, optionsPerRender) {
+> = async function toRenderExactlyTimes(
+  this: MatcherContext,
+  actual,
+  times,
+  optionsPerRender,
+) {
   const _stream = actual as RenderStream<any> | Assertable
   const stream =
     assertableSymbol in _stream ? _stream[assertableSymbol] : _stream
@@ -70,6 +74,7 @@ export const toRenderExactlyTimes: MatcherFunction<
     }
     try {
       while (stream.totalRenderCount() < times) {
+        // eslint-disable-next-line no-await-in-loop
         await stream.waitForNextRender(options)
       }
     } catch (e) {
@@ -95,8 +100,9 @@ export const toRenderExactlyTimes: MatcherFunction<
     pass,
     message() {
       return (
-        hint +
-        ` Expected component to${pass ? ' not' : ''} render exactly ${times}.` +
+        `${
+          hint
+        } Expected component to${pass ? ' not' : ''} render exactly ${times}.` +
         ` It rendered ${stream.totalRenderCount()} times.`
       )
     },

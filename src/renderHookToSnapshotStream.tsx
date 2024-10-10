@@ -1,9 +1,9 @@
 import {RenderHookOptions} from '@testing-library/react'
+import {createElement} from 'rehackt'
 import {createRenderStream} from './renderStream/createRenderStream.js'
-import type {NextRenderOptions} from './renderStream/createRenderStream.js'
+import {type NextRenderOptions} from './renderStream/createRenderStream.js'
 
 import {Render} from './renderStream/Render.js'
-import {createElement} from 'rehackt'
 import {Assertable, assertableSymbol, markAssertable} from './assertable.js'
 
 export interface SnapshotStream<Snapshot, Props> extends Assertable {
@@ -48,7 +48,7 @@ export interface SnapshotStream<Snapshot, Props> extends Assertable {
 
 export function renderHookToSnapshotStream<ReturnValue, Props extends {}>(
   renderCallback: (props: Props) => ReturnValue,
-  {initialProps, ...options}: RenderHookOptions<Props> = {},
+  {initialProps, ...renderOptions}: RenderHookOptions<Props> = {},
 ): SnapshotStream<ReturnValue, Props> {
   const {render, ...stream} = createRenderStream<{value: ReturnValue}>()
 
@@ -59,7 +59,7 @@ export function renderHookToSnapshotStream<ReturnValue, Props extends {}>(
 
   const {rerender: baseRerender, unmount} = render(
     createElement(HookComponent, initialProps),
-    options,
+    renderOptions,
   )
 
   function rerender(rerenderCallbackProps: Props) {

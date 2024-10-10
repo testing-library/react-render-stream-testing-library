@@ -2,11 +2,11 @@ import {
   type RenderOptions as BaseOptions,
   type RenderResult as BaseResult,
 } from '@testing-library/react'
-import {createRenderStream} from './renderStream/createRenderStream.js'
-import type {
-  RenderStreamOptions,
-  RenderStream,
-  ValidSnapshot,
+import {
+  createRenderStream,
+  type RenderStreamOptions,
+  type RenderStream,
+  type ValidSnapshot,
 } from './renderStream/createRenderStream.js'
 
 type RenderOptions<Snapshot extends ValidSnapshot = void> = BaseOptions &

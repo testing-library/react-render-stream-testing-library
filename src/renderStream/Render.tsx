@@ -70,13 +70,19 @@ export class RenderInstance<Snapshot> implements Render<Snapshot> {
   startTime: number
   commitTime: number
   count: number
+  public snapshot: Snapshot
+  private stringifiedDOM: string | undefined
+  public renderedComponents: Array<string | React.ComponentType>
 
   constructor(
     baseRender: BaseRender,
-    public snapshot: Snapshot,
-    private stringifiedDOM: string | undefined,
-    public renderedComponents: Array<string | React.ComponentType>,
+    snapshot: Snapshot,
+    stringifiedDOM: string | undefined,
+    renderedComponents: Array<string | React.ComponentType>,
   ) {
+    this.snapshot = snapshot
+    this.stringifiedDOM = stringifiedDOM
+    this.renderedComponents = renderedComponents
     this.id = baseRender.id
     this.phase = baseRender.phase
     this.actualDuration = baseRender.actualDuration
@@ -188,7 +194,7 @@ export function errorOnDomInteraction() {
     throw new Error(`
     DOM interaction with a snapshot detected in test.
     Please don't interact with the DOM you get from \`withinDOM\`,
-    but still use \`screen\' to get elements for simulating user interaction.
+    but still use \`screen\` to get elements for simulating user interaction.
     `)
   }
   events.forEach(event => {
