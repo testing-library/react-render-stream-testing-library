@@ -86,9 +86,9 @@
     "format": "kcd-scripts format",
     "lint": "kcd-scripts lint --config .eslintrc.cjs",
     "test": "kcd-scripts test --config jest.config.cjs",
-    "verify": "attw --pack . && publint",
-    "typecheck": "kcd-scripts typecheck --build",
-    "validate": "CI=true kcd-scripts validate verify,lint,typecheck,test"
+    "pack-and-verify": "attw --pack . && publint",
+    "typecheck": "kcd-scripts typecheck --build --noEmit",
+    "validate": "npm run pack-and-verify; CI=true kcd-scripts validate lint,typecheck,test"
   },
   "packageManager": "yarn@4.5.0",
   "resolutions": {
