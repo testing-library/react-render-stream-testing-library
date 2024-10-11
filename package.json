@@ -61,6 +61,7 @@
     "@types/jsdom": "^21.1.7",
     "@types/react": "^18",
     "@types/react-dom": "^18",
+    "concurrently": "^9.0.1",
     "expect": "^29.7.0",
     "kcd-scripts": "^16.0.0",
     "pkg-pr-new": "^0.0.29",
@@ -88,7 +89,7 @@
     "test": "kcd-scripts test --config jest.config.cjs",
     "pack-and-verify": "attw --pack . && publint",
     "typecheck": "kcd-scripts typecheck --build --noEmit",
-    "validate": "npm run pack-and-verify; CI=true kcd-scripts validate lint,typecheck,test"
+    "validate": "yarn pack-and-verify; CI=true yarn concurrently --group --prefix '[{name}]' --names lint,test,typecheck 'yarn lint' 'yarn test --verbose' 'yarn typecheck'"
   },
   "packageManager": "yarn@4.5.0",
   "resolutions": {
