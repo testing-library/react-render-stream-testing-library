@@ -4,6 +4,7 @@ import {createRenderStream} from '@testing-library/react-render-stream'
 import {userEvent} from '@testing-library/user-event'
 import * as React from 'react'
 import {ErrorBoundary} from 'react-error-boundary'
+import {getExpectErrorMessage} from '../../__testHelpers__/getCleanedErrorMessage.js'
 
 function CounterForm({
   value,
@@ -230,14 +231,9 @@ describe('onRender', () => {
     await userEvent.click(incrementButton)
     await userEvent.click(incrementButton)
     await takeRender()
-    const error = await takeRender()
-      .then(() => undefined as never)
-      .catch(e => e as Error)
+    const error = await getExpectErrorMessage(takeRender())
 
-    // eslint-disable-next-line no-control-regex
-    const consoleColors = /\x1b\[\d+m/g
-
-    expect(error.message.replace(consoleColors, '')).toMatchInlineSnapshot(`
+    expect(error).toMatchInlineSnapshot(`
 expect(received).toBe(expected) // Object.is equality
 
 Expected: 1

@@ -28,7 +28,9 @@ export const toRerender: MatcherFunction<[options?: NextRenderOptions]> =
     const _stream = actual as RenderStream<any> | Assertable
     const stream =
       assertableSymbol in _stream ? _stream[assertableSymbol] : _stream
-    const hint = this.utils.matcherHint('toRerender')
+    const hint = this.utils.matcherHint('toRerender', undefined, undefined, {
+      isNot: this.isNot,
+    })
     let pass = true
     try {
       await stream.peekRender({timeout: 100, ...options})
@@ -66,7 +68,12 @@ export const toRenderExactlyTimes: MatcherFunction<
   const stream =
     assertableSymbol in _stream ? _stream[assertableSymbol] : _stream
   const options = {timeout: 100, ...optionsPerRender}
-  const hint = this.utils.matcherHint('toRenderExactlyTimes')
+  const hint = this.utils.matcherHint(
+    'toRenderExactlyTimes',
+    undefined,
+    undefined,
+    {isNot: this.isNot},
+  )
   let pass = true
   try {
     if (stream.totalRenderCount() > times) {
@@ -102,8 +109,8 @@ export const toRenderExactlyTimes: MatcherFunction<
       return (
         `${
           hint
-        } Expected component to${pass ? ' not' : ''} render exactly ${times}.` +
-        ` It rendered ${stream.totalRenderCount()} times.`
+        }\n\nExpected component to${pass ? ' not' : ''} render exactly ${times} times.` +
+        `\nIt rendered ${stream.totalRenderCount()} times.`
       )
     },
   }

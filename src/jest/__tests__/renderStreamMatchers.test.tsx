@@ -8,6 +8,7 @@ import {
   toRenderExactlyTimes,
   toRerender,
 } from '../renderStreamMatchers.js'
+import {getExpectErrorMessage} from '../../__testHelpers__/getCleanedErrorMessage.js'
 
 expect.extend({
   toRerender,
@@ -56,6 +57,39 @@ describe('toRerender', () => {
 
     await expect(takeRender).not.toRerender()
   })
+
+  test("errors when it rerenders, but shouldn't", async () => {
+    const {takeRender, render} = createRenderStream({})
+
+    render(<RerenderingComponent />)
+    await expect(takeRender).toRerender()
+    await takeRender()
+
+    testEvents.emit('rerender')
+    const error = await getExpectErrorMessage(
+      expect(takeRender).not.toRerender(),
+    )
+    expect(error).toMatchInlineSnapshot(`
+expect(received).not.toRerender(expected)
+
+Expected component to not rerender, but it did.
+`)
+  })
+
+  test("errors when it should rerender, but doesn't", async () => {
+    const {takeRender, render} = createRenderStream({})
+
+    render(<RerenderingComponent />)
+    await expect(takeRender).toRerender()
+    await takeRender()
+
+    const error = await getExpectErrorMessage(expect(takeRender).toRerender())
+    expect(error).toMatchInlineSnapshot(`
+expect(received).toRerender(expected)
+
+Expected component to rerender, but it did not.
+`)
+  })
 })
 
 describe('toRenderExactlyTimes', () => {
@@ -66,5 +100,39 @@ describe('toRenderExactlyTimes', () => {
     testEvents.emit('rerender')
 
     await expect(takeRender).toRenderExactlyTimes(2)
+  })
+
+  test('errors when the count of rerenders is wrong', async () => {
+    const {takeRender, render} = createRenderStream({})
+
+    render(<RerenderingComponent />)
+    testEvents.emit('rerender')
+
+    const error = await getExpectErrorMessage(
+      expect(takeRender).toRenderExactlyTimes(3),
+    )
+    expect(error).toMatchInlineSnapshot(`
+expect(received).toRenderExactlyTimes(expected)
+
+Expected component to render exactly 3 times.
+It rendered 2 times.
+`)
+  })
+
+  test('errors when the count of rerenders is right (inverted)', async () => {
+    const {takeRender, render} = createRenderStream({})
+
+    render(<RerenderingComponent />)
+    testEvents.emit('rerender')
+
+    const error = await getExpectErrorMessage(
+      expect(takeRender).not.toRenderExactlyTimes(2),
+    )
+    expect(error).toMatchInlineSnapshot(`
+expect(received).not.toRenderExactlyTimes(expected)
+
+Expected component to not render exactly 2 times.
+It rendered 2 times.
+`)
   })
 })
