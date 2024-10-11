@@ -13,12 +13,12 @@ export const assertableSymbol = Symbol.for(
  ```
  */
 export type Assertable = {
-  [assertableSymbol]: RenderStream<any>
+  [assertableSymbol]: RenderStream<any, any>
 }
 
 export function markAssertable<T extends {}>(
   assertable: T,
-  stream: RenderStream<any>,
+  stream: RenderStream<any, any>,
 ): T & Assertable {
   return Object.assign(assertable, {
     [assertableSymbol]: stream,

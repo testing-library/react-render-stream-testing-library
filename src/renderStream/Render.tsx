@@ -1,16 +1,10 @@
-/* istanbul ignore file */
-
-/*
-Something in this file does not compile correctly while measuring code coverage
-and will lead to a
-  Uncaught [ReferenceError: cov_1zb8w312au is not defined]
-if we do not ignore this file in code coverage.
-
-As we only use this file in our internal tests, we can safely ignore it.
-*/
-
-import {within, screen} from '@testing-library/dom'
+import {screen, getQueriesForElement, Screen} from '@testing-library/dom'
 import {JSDOM, VirtualConsole} from 'jsdom'
+import {
+  BoundSyncFunctions,
+  type Queries,
+  type SyncQueries,
+} from './syncQueries.js'
 
 export interface BaseRender {
   id: string
@@ -25,18 +19,11 @@ export interface BaseRender {
   count: number
 }
 
-type Screen = typeof screen
+export type SyncScreen<Q extends Queries = SyncQueries> =
+  BoundSyncFunctions<Q> & Pick<Screen, 'debug' | 'logTestingPlaygroundURL'>
 
-export type SyncScreen = {
-  [K in keyof Screen]: K extends `find${string}`
-    ? {
-        /** @deprecated A snapshot is static, so avoid async queries! */
-        (...args: Parameters<Screen[K]>): ReturnType<Screen[K]>
-      }
-    : Screen[K]
-}
-
-export interface Render<Snapshot> extends BaseRender {
+export interface Render<Snapshot, Q extends Queries = SyncQueries>
+  extends BaseRender {
   /**
    * The snapshot, as returned by the `takeSnapshot` option of `createRenderStream`.
    */
@@ -57,12 +44,14 @@ export interface Render<Snapshot> extends BaseRender {
    * +expect(withinDOM().getByText("foo")).toBeInTheDocument();
    * ```
    */
-  withinDOM: () => SyncScreen
+  withinDOM: () => SyncScreen<Q>
 
   renderedComponents: Array<string | React.ComponentType>
 }
 
-export class RenderInstance<Snapshot> implements Render<Snapshot> {
+export class RenderInstance<Snapshot, Q extends Queries = SyncQueries>
+  implements Render<Snapshot, Q>
+{
   id: string
   phase: 'mount' | 'update' | 'nested-update'
   actualDuration: number
@@ -73,12 +62,14 @@ export class RenderInstance<Snapshot> implements Render<Snapshot> {
   public snapshot: Snapshot
   private stringifiedDOM: string | undefined
   public renderedComponents: Array<string | React.ComponentType>
+  private queries: Q
 
   constructor(
     baseRender: BaseRender,
     snapshot: Snapshot,
     stringifiedDOM: string | undefined,
     renderedComponents: Array<string | React.ComponentType>,
+    queries: Q,
   ) {
     this.snapshot = snapshot
     this.stringifiedDOM = stringifiedDOM
@@ -90,6 +81,7 @@ export class RenderInstance<Snapshot> implements Render<Snapshot> {
     this.startTime = baseRender.startTime
     this.commitTime = baseRender.commitTime
     this.count = baseRender.count
+    this.queries = queries
   }
 
   private _domSnapshot: HTMLElement | undefined
@@ -124,17 +116,23 @@ export class RenderInstance<Snapshot> implements Render<Snapshot> {
     return (this._domSnapshot = body)
   }
 
-  get withinDOM(): () => SyncScreen {
-    const snapScreen = Object.assign(within(this.domSnapshot), {
-      debug: (
-        ...[dom = this.domSnapshot, ...rest]: Parameters<typeof screen.debug>
-      ) => screen.debug(dom, ...rest),
-      logTestingPlaygroundURL: (
-        ...[dom = this.domSnapshot, ...rest]: Parameters<
-          typeof screen.logTestingPlaygroundURL
-        >
-      ) => screen.logTestingPlaygroundURL(dom, ...rest),
-    })
+  get withinDOM(): () => SyncScreen<Q> {
+    const snapScreen = Object.assign(
+      getQueriesForElement<Q>(
+        this.domSnapshot,
+        this.queries,
+      ) as any as BoundSyncFunctions<Q>,
+      {
+        debug: (
+          ...[dom = this.domSnapshot, ...rest]: Parameters<typeof screen.debug>
+        ) => screen.debug(dom, ...rest),
+        logTestingPlaygroundURL: (
+          ...[dom = this.domSnapshot, ...rest]: Parameters<
+            typeof screen.logTestingPlaygroundURL
+          >
+        ) => screen.logTestingPlaygroundURL(dom, ...rest),
+      },
+    )
     return () => snapScreen
   }
 }

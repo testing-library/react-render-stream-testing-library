@@ -87,6 +87,32 @@ describe('snapshotDOM', () => {
       }
     }
   })
+
+  test('queries option', async () => {
+    function Component() {
+      return null
+    }
+    const queries = {
+      foo: (_: any) => {
+        return null
+      },
+    }
+
+    const {takeRender, render} = createRenderStream({
+      snapshotDOM: true,
+      queries,
+    })
+    render(<Component />)
+
+    const {withinDOM} = await takeRender()
+    expect(withinDOM().foo()).toBe(null)
+    function _typeTest() {
+      // @ts-expect-error should not be present
+      withinDOM().getByText
+      withinDOM().debug()
+      const _str: string = withinDOM().logTestingPlaygroundURL()
+    }
+  })
 })
 
 describe('replaceSnapshot', () => {

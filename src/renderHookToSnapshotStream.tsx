@@ -11,7 +11,7 @@ export interface SnapshotStream<Snapshot, Props> extends Assertable {
    * Errors thrown during component render will be captured here, too.
    */
   renders: Array<
-    | Render<{value: Snapshot}>
+    | Render<{value: Snapshot}, never>
     | {phase: 'snapshotError'; count: number; error: unknown}
   >
   /**
@@ -49,7 +49,7 @@ export function renderHookToSnapshotStream<ReturnValue, Props>(
   renderCallback: (props: Props) => ReturnValue,
   {initialProps, ...renderOptions}: RenderHookOptions<Props> = {},
 ): SnapshotStream<ReturnValue, Props> {
-  const {render, ...stream} = createRenderStream<{value: ReturnValue}>()
+  const {render, ...stream} = createRenderStream<{value: ReturnValue}, never>()
 
   const HookComponent: React.FC<{arg: Props}> = props => {
     stream.replaceSnapshot({value: renderCallback(props.arg)})
