@@ -2,7 +2,7 @@
   "name": "@testing-library/react-render-stream",
   "version": "0.1.0",
   "repository": {
-    "url": "git+https://github.com/phryneas/react-render-stream-testing-library.git"
+    "url": "git+https://github.com/testing-library/react-render-stream-testing-library.git"
   },
   "author": {
     "name": "Lenz Weber-Tronic",
