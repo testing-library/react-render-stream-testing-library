@@ -282,6 +282,11 @@ await expect(snapshotStream).toRerender()
 > await expect(takeRender).not.toRerender({timeout: 300})
 > ```
 
+> [!TIP]
+>
+> If you don't want these matchers not to be automatically installed, you can
+> import from `@testing-library/react-render-stream` instead.
+
 ## A note on `act`.
 
 You might want to avoid using this library with `act`, as `act`
