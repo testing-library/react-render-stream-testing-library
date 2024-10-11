@@ -6,7 +6,7 @@ import {
 } from '@testing-library/react-render-stream'
 import * as React from 'react'
 import {ErrorBoundary} from 'react-error-boundary'
-import {__use} from '../__testHelpers__/useShim.js'
+import {__use} from '../../__testHelpers__/useShim.js'
 
 type AsyncState =
   | {status: 'loading'}
