@@ -23,24 +23,39 @@
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
     },
-    "./jest": {
+    "./pure": {
       "types": {
-        "module-sync": "./dist/jest.d.ts",
-        "module": "./dist/jest.d.ts",
-        "import": "./dist/jest.d.ts",
-        "require": "./dist/jest.d.cts"
+        "module-sync": "./dist/pure.d.ts",
+        "module": "./dist/pure.d.ts",
+        "import": "./dist/pure.d.ts",
+        "require": "./dist/pure.d.cts"
       },
-      "module-sync": "./dist/jest.js",
-      "module": "./dist/jest.js",
-      "import": "./dist/jest.js",
-      "require": "./dist/jest.cjs"
+      "module-sync": "./dist/pure.js",
+      "module": "./dist/pure.js",
+      "import": "./dist/pure.js",
+      "require": "./dist/pure.cjs"
+    },
+    "./expect": {
+      "types": {
+        "module-sync": "./dist/expect.d.ts",
+        "module": "./dist/expect.d.ts",
+        "import": "./dist/expect.d.ts",
+        "require": "./dist/expect.d.cts"
+      },
+      "module-sync": "./dist/expect.js",
+      "module": "./dist/expect.js",
+      "import": "./dist/expect.js",
+      "require": "./dist/expect.cjs"
     }
   },
   "types": "./dist/index.d.ts",
   "typesVersions": {
     "*": {
-      "jest": [
-        "./dist/jest.d.ts"
+      "expect": [
+        "./dist/expect.d.ts"
+      ],
+      "pure": [
+        "./dist/pure.d.ts"
       ]
     }
   },

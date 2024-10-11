@@ -6,24 +6,8 @@ import {
   renderHookToSnapshotStream,
 } from '@testing-library/react-render-stream'
 import * as React from 'react'
-import {
-  RenderStreamMatchers,
-  toRenderExactlyTimes,
-  toRerender,
-} from '../renderStreamMatchers.js'
 import {getExpectErrorMessage} from '../../__testHelpers__/getCleanedErrorMessage.js'
 import {withDisabledActWarnings} from '../../__testHelpers__/withDisabledActWarnings.js'
-
-expect.extend({
-  toRerender,
-  toRenderExactlyTimes,
-})
-
-declare module 'expect' {
-  // eslint-disable-next-line @typescript-eslint/no-empty-interface
-  interface Matchers<R extends void | Promise<void>, T = unknown>
-    extends RenderStreamMatchers<R, T> {}
-}
 
 const testEvents = new EventEmitter<{
   rerender: []

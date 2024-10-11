@@ -3,7 +3,8 @@ import {defineConfig} from 'tsup'
 export default defineConfig({
   entry: {
     index: 'src/index.ts',
-    jest: 'src/jest/index.ts',
+    pure: 'src/pure.ts',
+    expect: 'src/expect/index.ts',
   },
   splitting: false,
   sourcemap: true,
