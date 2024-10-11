@@ -7,13 +7,7 @@ on:
       - '**'
     tags:
       - '!**'
-  workflow_dispatch:
-    inputs:
-      dryRun:
-        type: boolean
-        description: 'Run semantic-release in dry-run mode'
-        required: true
-        default: true
+
 jobs:
   ci:
     name: CI
@@ -46,7 +40,7 @@ jobs:
     if:
       ${{ github.repository ==
       'testing-library/react-render-stream-testing-library' && github.event_name
-      == 'workflow_dispatch' }}
+      == 'push' }}
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -75,7 +69,6 @@ jobs:
               {name: 'beta', prerelease: true},
               {name: 'alpha', prerelease: true}
             ]
-          dry_run: ${{ inputs.dryRun }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
