@@ -1,6 +1,6 @@
 {
   "name": "@testing-library/react-render-stream",
-  "version": "0.1.0",
+  "version": "0.0.0-semantically-released",
   "repository": {
     "url": "git+https://github.com/testing-library/react-render-stream-testing-library.git"
   },
