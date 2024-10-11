@@ -241,6 +241,47 @@ test('assertions in `onRender`', async () => {
 > passed into `onRender` of React's `Profiler` component, as well as `snapshot`,
 > `replaceSnapshot` and `mergeSnapshot`
 
+### `expect(...)[.not].toRerender()` and `expect(...)[.not].toRenderExactlyTimes(n)`
+
+This library adds to matchers to `expect` that can be used like
+
+```tsx
+test('basic functionality', async () => {
+  const {takeRender} = renderToRenderStream(<RerenderingComponent />)
+
+  await expect(takeRender).toRerender()
+  await takeRender()
+
+  // trigger a rerender somehow
+  await expect(takeRender).toRerender()
+  await takeRender()
+
+  // ensure at the end of a test that no more renders will happen
+  await expect(takeRender).not.toRerender()
+  await expect(takeRender).toRenderExactlyTimes(2)
+})
+```
+
+These matchers can be used on multiple different objects:
+
+```ts
+await expect(takeRender).toRerender()
+await expect(renderStream).toRerender()
+await expect(takeSnapshot).toRerender()
+await expect(snapshotStream).toRerender()
+```
+
+> [!NOTE]
+>
+> By default, `.toRerender` and `toRenderExactlyTimes` will wait 100ms for
+> renders or to ensure no more renders happens.
+>
+> You can modify that with the `timeout` option:
+>
+> ```js
+> await expect(takeRender).not.toRerender({timeout: 300})
+> ```
+
 ## A note on `act`.
 
 You might want to avoid using this library with `act`, as `act`
