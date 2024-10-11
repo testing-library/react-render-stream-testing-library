@@ -17,7 +17,7 @@ application.
 
 ## Brought to you by Apollo
 
-<a style="display: flex; justify-content: center; height: 40px; margin: 1em" href="https://www.apollographql.com/"><img src="./other/apollo-wordmark.svg" height="100" alt="">
+<a style="display: flex; justify-content: center; height: 40px; margin: 1em" href="https://www.apollographql.com/"><img src="./other/apollo-wordmark.svg" height="40" alt="">
 </a>
 
 This library originally was part of the Apollo Client test suite and is
