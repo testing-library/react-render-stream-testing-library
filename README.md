@@ -246,7 +246,7 @@ test('assertions in `onRender`', async () => {
 })
 ```
 
-> [!INFO]
+> [!NOTE]
 >
 > `info` contains the
 > [base profiling information](https://react.dev/reference/react/Profiler#onrender-parameters)
