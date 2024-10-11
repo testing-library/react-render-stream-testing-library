@@ -1,7 +1,10 @@
 /* eslint-disable @typescript-eslint/no-unnecessary-condition */
 import {EventEmitter} from 'node:events'
 import {describe, test, expect} from '@jest/globals'
-import {createRenderStream} from '@testing-library/react-render-stream'
+import {
+  createRenderStream,
+  renderHookToSnapshotStream,
+} from '@testing-library/react-render-stream'
 import * as React from 'react'
 import {
   RenderStreamMatchers,
@@ -9,6 +12,7 @@ import {
   toRerender,
 } from '../renderStreamMatchers.js'
 import {getExpectErrorMessage} from '../../__testHelpers__/getCleanedErrorMessage.js'
+import {withDisabledActWarnings} from '../../__testHelpers__/withDisabledActWarnings.js'
 
 expect.extend({
   toRerender,
@@ -25,21 +29,20 @@ const testEvents = new EventEmitter<{
   rerender: []
 }>()
 
-function RerenderingComponent() {
+function useRerender() {
   const [, rerender] = React.useReducer(c => c + 1, 0)
   React.useEffect(() => {
-    function cb() {
-      const anyThis = globalThis as any as {IS_REACT_ACT_ENVIRONMENT?: boolean}
-      const prev = anyThis.IS_REACT_ACT_ENVIRONMENT
-      anyThis.IS_REACT_ACT_ENVIRONMENT = false
-      rerender()
-      anyThis.IS_REACT_ACT_ENVIRONMENT = prev
-    }
+    const cb = () => void withDisabledActWarnings(rerender)
+
     testEvents.addListener('rerender', cb)
     return () => {
       testEvents.removeListener('rerender', cb)
     }
   }, [])
+}
+
+function RerenderingComponent() {
+  useRerender()
   return null
 }
 
@@ -56,6 +59,46 @@ describe('toRerender', () => {
     await takeRender()
 
     await expect(takeRender).not.toRerender()
+  })
+
+  test('works with renderStream object', async () => {
+    const renderStream = createRenderStream({})
+
+    renderStream.render(<RerenderingComponent />)
+    await expect(renderStream).toRerender()
+    await renderStream.takeRender()
+
+    testEvents.emit('rerender')
+    await expect(renderStream).toRerender()
+    await renderStream.takeRender()
+
+    await expect(renderStream).not.toRerender()
+  })
+
+  test('works with takeSnapshot function', async () => {
+    const {takeSnapshot} = renderHookToSnapshotStream(() => useRerender())
+
+    await expect(takeSnapshot).toRerender()
+    await takeSnapshot()
+
+    testEvents.emit('rerender')
+    await expect(takeSnapshot).toRerender()
+    await takeSnapshot()
+
+    await expect(takeSnapshot).not.toRerender()
+  })
+
+  test('works with snapshotStream', async () => {
+    const snapshotStream = renderHookToSnapshotStream(() => useRerender())
+
+    await expect(snapshotStream).toRerender()
+    await snapshotStream.takeSnapshot()
+
+    testEvents.emit('rerender')
+    await expect(snapshotStream).toRerender()
+    await snapshotStream.takeSnapshot()
+
+    await expect(snapshotStream).not.toRerender()
   })
 
   test("errors when it rerenders, but shouldn't", async () => {
@@ -100,6 +143,29 @@ describe('toRenderExactlyTimes', () => {
     testEvents.emit('rerender')
 
     await expect(takeRender).toRenderExactlyTimes(2)
+  })
+
+  test('works with renderStream object', async () => {
+    const renderStream = createRenderStream({})
+
+    renderStream.render(<RerenderingComponent />)
+    testEvents.emit('rerender')
+
+    await expect(renderStream).toRenderExactlyTimes(2)
+  })
+
+  test('works with takeSnapshot function', async () => {
+    const {takeSnapshot} = renderHookToSnapshotStream(() => useRerender())
+    testEvents.emit('rerender')
+
+    await expect(takeSnapshot).toRenderExactlyTimes(2)
+  })
+
+  test('works with snapshotStream', async () => {
+    const snapshotStream = renderHookToSnapshotStream(() => useRerender())
+    testEvents.emit('rerender')
+
+    await expect(snapshotStream).toRenderExactlyTimes(2)
   })
 
   test('errors when the count of rerenders is wrong', async () => {

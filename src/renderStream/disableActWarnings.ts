@@ -9,7 +9,7 @@ export function disableActWarnings() {
   anyThis.IS_REACT_ACT_ENVIRONMENT = false
 
   return {
-    [Symbol.dispose]() {
+    cleanup: () => {
       anyThis.IS_REACT_ACT_ENVIRONMENT = prevActEnv
     },
   }

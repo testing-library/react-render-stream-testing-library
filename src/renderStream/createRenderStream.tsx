@@ -272,7 +272,7 @@ export function createRenderStream<Snapshot extends ValidSnapshot = void>({
       // In many cases we do not control the resolution of the suspended
       // promise which results in noisy tests when the profiler due to
       // repeated act warnings.
-      using _disabledActWarnings = disableActWarnings()
+      const disabledActWarnings = disableActWarnings()
 
       let error: unknown
 
@@ -290,6 +290,7 @@ export function createRenderStream<Snapshot extends ValidSnapshot = void>({
         if (!(error && error instanceof WaitForRenderTimeoutError)) {
           iteratorPosition++
         }
+        disabledActWarnings.cleanup()
       }
     }, stream),
     getCurrentRender() {
