@@ -1,6 +1,6 @@
-import {queries, Query, Queries} from '@testing-library/dom'
+import {queries} from '@testing-library/dom'
 
-export {Query, Queries}
+export {Queries} from '@testing-library/dom'
 
 type OriginalQueries = typeof queries
 
