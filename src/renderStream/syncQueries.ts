@@ -10,7 +10,7 @@ export type SyncQueries = {
     : K]: OriginalQueries[K]
 }
 
-export const syncQueries = Object.values(
+export const syncQueries = Object.fromEntries(
   Object.entries(queries).filter(
     ([key]) => key.startsWith('get') || key.startsWith('find'),
   ),

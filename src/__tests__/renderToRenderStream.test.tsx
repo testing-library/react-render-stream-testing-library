@@ -58,6 +58,37 @@ describe('snapshotDOM', () => {
       expect(input.value).toBe('2')
     }
   })
+
+  test('queries option', async () => {
+    function Component() {
+      return null
+    }
+    const queries = {
+      foo: (_: any) => {
+        return null
+      },
+    }
+    const {takeRender, renderResultPromise} = renderToRenderStream(
+      <Component />,
+      {
+        queries,
+        snapshotDOM: true,
+      },
+    )
+    const utils = await renderResultPromise
+    expect(utils.foo()).toBe(null)
+    const {withinDOM} = await takeRender()
+    expect(withinDOM().foo()).toBe(null)
+    function _typeTest() {
+      // @ts-expect-error should not be present
+      utils.getByText
+      // @ts-expect-error should not be present
+      withinDOM().getByText
+      utils.debug()
+      withinDOM().debug()
+      const _str: string = withinDOM().logTestingPlaygroundURL()
+    }
+  })
 })
 
 // for more tests, see the `createRenderStream` test suite, as `renderToRenderStream` is just a wrapper around that

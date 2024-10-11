@@ -14,7 +14,7 @@ import {SyncQueries} from './renderStream/syncQueries.js'
 type RenderOptions<
   Snapshot extends ValidSnapshot = void,
   Q extends Queries = SyncQueries,
-> = BaseOptions<Q> & RenderStreamOptions<Snapshot>
+> = BaseOptions<Q> & RenderStreamOptions<Snapshot, Q>
 
 export interface RenderStreamWithRenderResult<
   Snapshot extends ValidSnapshot = void,
