@@ -1,22 +1,17 @@
-import {Queries, RenderHookOptions} from '@testing-library/react'
+import {RenderHookOptions} from '@testing-library/react'
 import React from 'rehackt'
 import {createRenderStream} from './renderStream/createRenderStream.js'
 import {type NextRenderOptions} from './renderStream/createRenderStream.js'
 import {Render} from './renderStream/Render.js'
 import {Assertable, assertableSymbol, markAssertable} from './assertable.js'
-import {SyncQueries} from './renderStream/syncQueries.js'
 
-export interface SnapshotStream<
-  Snapshot,
-  Props,
-  Q extends Queries = SyncQueries,
-> extends Assertable {
+export interface SnapshotStream<Snapshot, Props> extends Assertable {
   /**
    * An array of all renders that have happened so far.
    * Errors thrown during component render will be captured here, too.
    */
   renders: Array<
-    | Render<{value: Snapshot}, Q>
+    | Render<{value: Snapshot}, never>
     | {phase: 'snapshotError'; count: number; error: unknown}
   >
   /**
@@ -50,21 +45,11 @@ export interface SnapshotStream<
   unmount: () => void
 }
 
-export function renderHookToSnapshotStream<
-  ReturnValue,
-  Props,
-  Q extends Queries = SyncQueries,
->(
+export function renderHookToSnapshotStream<ReturnValue, Props>(
   renderCallback: (props: Props) => ReturnValue,
-  {
-    initialProps,
-    queries,
-    ...renderOptions
-  }: RenderHookOptions<Props> & {queries?: Q} = {},
-): SnapshotStream<ReturnValue, Props, Q> {
-  const {render, ...stream} = createRenderStream<{value: ReturnValue}, Q>({
-    queries,
-  })
+  {initialProps, ...renderOptions}: RenderHookOptions<Props> = {},
+): SnapshotStream<ReturnValue, Props> {
+  const {render, ...stream} = createRenderStream<{value: ReturnValue}, never>()
 
   const HookComponent: React.FC<{arg: Props}> = props => {
     stream.replaceSnapshot({value: renderCallback(props.arg)})
@@ -73,7 +58,7 @@ export function renderHookToSnapshotStream<
 
   const {rerender: baseRerender, unmount} = render(
     <HookComponent arg={initialProps!} />,
-    {...renderOptions, queries},
+    renderOptions,
   )
 
   function rerender(rerenderCallbackProps: Props) {
