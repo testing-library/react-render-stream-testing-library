@@ -7,7 +7,13 @@ on:
       - '**'
     tags:
       - '!**'
-
+  workflow_dispatch:
+    inputs:
+      dryRun:
+        type: boolean
+        description: 'Run semantic-release in dry-run mode'
+        required: true
+        default: true
 jobs:
   ci:
     name: CI
@@ -27,3 +33,50 @@ jobs:
 
       - name: Run tests, lint and verify package integrity
         run: yarn run validate
+
+  release:
+    permissions:
+      id-token: write # required for provenance
+      actions: write #  to cancel/stop running workflows (styfle/cancel-workflow-action)
+      contents: write #  to create release tags (cycjimmy/semantic-release-action)
+      issues: write # to post release that resolves an issue (cycjimmy/semantic-release-action)
+
+    needs: ci
+    runs-on: ubuntu-latest
+    if:
+      ${{ github.repository ==
+      'testing-library/react-render-stream-testing-library' && github.event_name
+      == 'workflow_dispatch' }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          cache: yarn
+
+      - name: Install dependencies
+        run: yarn install
+
+      - name: 🏗 Run build script
+        run: yarn build
+
+      - name: 🚀 Release
+        uses: cycjimmy/semantic-release-action@v2
+        with:
+          semantic_version: 0
+          branches: |
+            [
+              '+([0-9])?(.{+([0-9]),x}).x',
+              'main',
+              'next',
+              'next-major',
+              {name: 'beta', prerelease: true},
+              {name: 'alpha', prerelease: true}
+            ]
+          dry_run: ${{ inputs.dryRun }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
