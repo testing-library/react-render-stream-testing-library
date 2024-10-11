@@ -5,14 +5,14 @@ export {Queries} from '@testing-library/dom'
 type OriginalQueries = typeof queries
 
 export type SyncQueries = {
-  [K in keyof OriginalQueries as K extends `${'query'}${string}`
+  [K in keyof OriginalQueries as K extends `${'find'}${string}`
     ? never
     : K]: OriginalQueries[K]
 }
 
 export const syncQueries = Object.fromEntries(
   Object.entries(queries).filter(
-    ([key]) => key.startsWith('get') || key.startsWith('find'),
+    ([key]) => key.startsWith('get') || key.startsWith('query'),
   ),
 ) as any as SyncQueries
 
