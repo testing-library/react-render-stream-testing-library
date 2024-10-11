@@ -1,17 +1,22 @@
-import {RenderHookOptions} from '@testing-library/react'
+import {Queries, RenderHookOptions} from '@testing-library/react'
 import React from 'rehackt'
 import {createRenderStream} from './renderStream/createRenderStream.js'
 import {type NextRenderOptions} from './renderStream/createRenderStream.js'
 import {Render} from './renderStream/Render.js'
 import {Assertable, assertableSymbol, markAssertable} from './assertable.js'
+import {SyncQueries} from './renderStream/syncQueries.js'
 
-export interface SnapshotStream<Snapshot, Props> extends Assertable {
+export interface SnapshotStream<
+  Snapshot,
+  Props,
+  Q extends Queries = SyncQueries,
+> extends Assertable {
   /**
    * An array of all renders that have happened so far.
    * Errors thrown during component render will be captured here, too.
    */
   renders: Array<
-    | Render<{value: Snapshot}>
+    | Render<{value: Snapshot}, Q>
     | {phase: 'snapshotError'; count: number; error: unknown}
   >
   /**
@@ -45,11 +50,21 @@ export interface SnapshotStream<Snapshot, Props> extends Assertable {
   unmount: () => void
 }
 
-export function renderHookToSnapshotStream<ReturnValue, Props>(
+export function renderHookToSnapshotStream<
+  ReturnValue,
+  Props,
+  Q extends Queries = SyncQueries,
+>(
   renderCallback: (props: Props) => ReturnValue,
-  {initialProps, ...renderOptions}: RenderHookOptions<Props> = {},
-): SnapshotStream<ReturnValue, Props> {
-  const {render, ...stream} = createRenderStream<{value: ReturnValue}>()
+  {
+    initialProps,
+    queries,
+    ...renderOptions
+  }: RenderHookOptions<Props> & {queries?: Q} = {},
+): SnapshotStream<ReturnValue, Props, Q> {
+  const {render, ...stream} = createRenderStream<{value: ReturnValue}, Q>({
+    queries,
+  })
 
   const HookComponent: React.FC<{arg: Props}> = props => {
     stream.replaceSnapshot({value: renderCallback(props.arg)})
@@ -58,7 +73,7 @@ export function renderHookToSnapshotStream<ReturnValue, Props>(
 
   const {rerender: baseRerender, unmount} = render(
     <HookComponent arg={initialProps!} />,
-    renderOptions,
+    {...renderOptions, queries},
   )
 
   function rerender(rerenderCallbackProps: Props) {

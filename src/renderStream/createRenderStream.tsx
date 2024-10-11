@@ -6,6 +6,7 @@ import {RenderInstance, type Render, type BaseRender} from './Render.js'
 import {type RenderStreamContextValue} from './context.js'
 import {RenderStreamContextProvider} from './context.js'
 import {disableActWarnings} from './disableActWarnings.js'
+import {syncQueries, type Queries, type SyncQueries} from './syncQueries.js'
 
 export type ValidSnapshot =
   // eslint-disable-next-line @typescript-eslint/no-invalid-void-type
@@ -29,7 +30,10 @@ interface MergeSnapshot<Snapshot> {
   ): void
 }
 
-export interface RenderStream<Snapshot extends ValidSnapshot> {
+export interface RenderStream<
+  Snapshot extends ValidSnapshot,
+  Q extends Queries = SyncQueries,
+> {
   // Allows for partial updating of the snapshot by shallow merging the results
   mergeSnapshot: MergeSnapshot<Snapshot>
   // Performs a full replacement of the snapshot
@@ -39,21 +43,22 @@ export interface RenderStream<Snapshot extends ValidSnapshot> {
    * Errors thrown during component render will be captured here, too.
    */
   renders: Array<
-    Render<Snapshot> | {phase: 'snapshotError'; count: number; error: unknown}
+    | Render<Snapshot, Q>
+    | {phase: 'snapshotError'; count: number; error: unknown}
   >
   /**
    * Peeks the next render from the current iterator position, without advancing the iterator.
    * If no render has happened yet, it will wait for the next render to happen.
    * @throws {WaitForRenderTimeoutError} if no render happens within the timeout
    */
-  peekRender: (options?: NextRenderOptions) => Promise<Render<Snapshot>>
+  peekRender: (options?: NextRenderOptions) => Promise<Render<Snapshot, Q>>
   /**
    * Iterates to the next render and returns it.
    * If no render has happened yet, it will wait for the next render to happen.
    * @throws {WaitForRenderTimeoutError} if no render happens within the timeout
    */
   takeRender: Assertable &
-    ((options?: NextRenderOptions) => Promise<Render<Snapshot>>)
+    ((options?: NextRenderOptions) => Promise<Render<Snapshot, Q>>)
   /**
    * Returns the total number of renders.
    */
@@ -62,20 +67,27 @@ export interface RenderStream<Snapshot extends ValidSnapshot> {
    * Returns the current render.
    * @throws {Error} if no render has happened yet
    */
-  getCurrentRender: () => Render<Snapshot>
+  getCurrentRender: () => Render<Snapshot, Q>
   /**
    * Waits for the next render to happen.
    * Does not advance the render iterator.
    */
-  waitForNextRender: (options?: NextRenderOptions) => Promise<Render<Snapshot>>
+  waitForNextRender: (
+    options?: NextRenderOptions,
+  ) => Promise<Render<Snapshot, Q>>
 }
 
-export interface RenderStreamWithRenderFn<Snapshot extends ValidSnapshot>
-  extends RenderStream<Snapshot> {
+export interface RenderStreamWithRenderFn<
+  Snapshot extends ValidSnapshot,
+  Q extends Queries = SyncQueries,
+> extends RenderStream<Snapshot, Q> {
   render: typeof baseRender
 }
 
-export type RenderStreamOptions<Snapshot extends ValidSnapshot> = {
+export type RenderStreamOptions<
+  Snapshot extends ValidSnapshot,
+  Q extends Queries = SyncQueries,
+> = {
   onRender?: (
     info: BaseRender & {
       snapshot: Snapshot
@@ -90,6 +102,7 @@ export type RenderStreamOptions<Snapshot extends ValidSnapshot> = {
    * `useTrackRenders` occured.
    */
   skipNonTrackingRenders?: boolean
+  queries?: Q
 }
 
 export class WaitForRenderTimeoutError extends Error {
@@ -100,19 +113,26 @@ export class WaitForRenderTimeoutError extends Error {
   }
 }
 
-export function createRenderStream<Snapshot extends ValidSnapshot = void>({
+export function createRenderStream<
+  Snapshot extends ValidSnapshot = void,
+  Q extends Queries = SyncQueries,
+>({
   onRender,
   snapshotDOM = false,
   initialSnapshot,
   skipNonTrackingRenders,
-}: RenderStreamOptions<Snapshot> = {}): RenderStreamWithRenderFn<Snapshot> {
+  queries = syncQueries as any as Q,
+}: RenderStreamOptions<Snapshot, Q> = {}): RenderStreamWithRenderFn<
+  Snapshot,
+  Q
+> {
   // creating the object first and then assigning in all the properties
   // allows keeping the object instance for reference while the members are
   // created, which is important for the `markAssertable` function
-  const stream = {} as any as RenderStreamWithRenderFn<Snapshot>
+  const stream = {} as any as RenderStreamWithRenderFn<Snapshot, Q>
 
-  let nextRender: Promise<Render<Snapshot>> | undefined,
-    resolveNextRender: ((render: Render<Snapshot>) => void) | undefined,
+  let nextRender: Promise<Render<Snapshot, Q>> | undefined,
+    resolveNextRender: ((render: Render<Snapshot, Q>) => void) | undefined,
     rejectNextRender: ((error: unknown) => void) | undefined
   function resetNextRender() {
     nextRender = undefined
@@ -199,6 +219,7 @@ export function createRenderStream<Snapshot extends ValidSnapshot = void>({
         snapshot,
         domSnapshot,
         renderStreamContext.renderedComponents,
+        queries,
       )
       renderStreamContext.renderedComponents = []
       stream.renders.push(render)
@@ -247,7 +268,8 @@ export function createRenderStream<Snapshot extends ValidSnapshot = void>({
     replaceSnapshot,
     mergeSnapshot,
     renders: new Array<
-      Render<Snapshot> | {phase: 'snapshotError'; count: number; error: unknown}
+      | Render<Snapshot, Q>
+      | {phase: 'snapshotError'; count: number; error: unknown}
     >(),
     totalRenderCount() {
       return stream.renders.length
@@ -316,12 +338,12 @@ export function createRenderStream<Snapshot extends ValidSnapshot = void>({
     },
     waitForNextRender({timeout = 1000}: NextRenderOptions = {}) {
       if (!nextRender) {
-        nextRender = Promise.race<Render<Snapshot>>([
-          new Promise<Render<Snapshot>>((resolve, reject) => {
+        nextRender = Promise.race<Render<Snapshot, Q>>([
+          new Promise<Render<Snapshot, Q>>((resolve, reject) => {
             resolveNextRender = resolve
             rejectNextRender = reject
           }),
-          new Promise<Render<Snapshot>>((_, reject) =>
+          new Promise<Render<Snapshot, Q>>((_, reject) =>
             setTimeout(() => {
               const error = new WaitForRenderTimeoutError()
               Error.captureStackTrace(error, stream.waitForNextRender)
