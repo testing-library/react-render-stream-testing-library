@@ -49,7 +49,8 @@ describe('snapshotDOM', () => {
     }
     {
       const {withinDOM} = await takeRender()
-      const input = withinDOM().getByLabelText<HTMLInputElement>('Value')
+      // a one-off to test that `queryBy` works and accepts a type argument
+      const input = withinDOM().queryByLabelText<HTMLInputElement>('Value')!
       expect(input.value).toBe('1')
     }
     {
