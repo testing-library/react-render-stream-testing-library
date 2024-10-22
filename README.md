@@ -2,7 +2,7 @@
 
 ## What is this library?
 
-This library allows you to make render-per-render asserions on your React
+This library allows you to make render-per-render assertions on your React
 components and hooks. This is usually not necessary, but can be highly
 beneficial when testing hot code paths.
 
