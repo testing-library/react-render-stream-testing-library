@@ -256,9 +256,9 @@ export function createRenderStream<
       wrapper: props => {
         const ParentWrapper = options?.wrapper ?? React.Fragment
         return (
-          <ParentWrapper>
-            <Wrapper>{props.children}</Wrapper>
-          </ParentWrapper>
+          <Wrapper>
+            <ParentWrapper>{props.children}</ParentWrapper>
+          </Wrapper>
         )
       },
     })
