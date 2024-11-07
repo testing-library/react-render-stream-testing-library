@@ -2631,7 +2631,7 @@ __metadata:
     expect: "npm:^29.7.0"
     jsdom: "npm:^25.0.1"
     kcd-scripts: "npm:^16.0.0"
-    pkg-pr-new: "npm:^0.0.29"
+    pkg-pr-new: "npm:^0.0.30"
     prettier: "npm:^3.3.3"
     publint: "npm:^0.2.11"
     react: "npm:^18.3.1"
@@ -5585,7 +5585,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"fdir@npm:^6.3.0, fdir@npm:^6.4.0":
+"fdir@npm:^6.4.0":
   version: 6.4.0
   resolution: "fdir@npm:6.4.0"
   peerDependencies:
@@ -5594,6 +5594,18 @@ __metadata:
     picomatch:
       optional: true
   checksum: 10c0/9a03efa1335d78ea386b701799b08ad9e7e8da85d88567dc162cd28dd8e9486e8c269b3e95bfeb21dd6a5b14ebf69d230eb6e18f49d33fbda3cd97432f648c48
+  languageName: node
+  linkType: hard
+
+"fdir@npm:^6.4.2":
+  version: 6.4.2
+  resolution: "fdir@npm:6.4.2"
+  peerDependencies:
+    picomatch: ^3 || ^4
+  peerDependenciesMeta:
+    picomatch:
+      optional: true
+  checksum: 10c0/34829886f34a3ca4170eca7c7180ec4de51a3abb4d380344063c0ae2e289b11d2ba8b724afee974598c83027fea363ff598caf2b51bc4e6b1e0d8b80cc530573
   languageName: node
   linkType: hard
 
@@ -8927,9 +8939,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"pkg-pr-new@npm:^0.0.29":
-  version: 0.0.29
-  resolution: "pkg-pr-new@npm:0.0.29"
+"pkg-pr-new@npm:^0.0.30":
+  version: 0.0.30
+  resolution: "pkg-pr-new@npm:0.0.30"
   dependencies:
     "@jsdevtools/ez-spawn": "npm:^3.0.4"
     "@octokit/action": "npm:^6.1.0"
@@ -8938,10 +8950,10 @@ __metadata:
     package-manager-detector: "npm:^0.1.2"
     pkg-types: "npm:^1.1.1"
     query-registry: "npm:^3.0.1"
-    tinyglobby: "npm:0.2.6"
+    tinyglobby: "npm:^0.2.9"
   bin:
     pkg-pr-new: bin/cli.js
-  checksum: 10c0/e270e29750ca877f8e6c211aee485a41fbbd1b2df0a6cc30f364ac012f81d2a6985215d0a305271bbb0aa770db1390960fbb09a7dd276876125c7193a3b69437
+  checksum: 10c0/754cde6d51bcf50d8359e93cc7e45924578d19d86dd439ff438a874a22a9a1765034bfe225324a5a96b5f45dc32c0e4f73d6c7e2241b7a809f4b9a074829c8de
   languageName: node
   linkType: hard
 
@@ -10391,16 +10403,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"tinyglobby@npm:0.2.6":
-  version: 0.2.6
-  resolution: "tinyglobby@npm:0.2.6"
-  dependencies:
-    fdir: "npm:^6.3.0"
-    picomatch: "npm:^4.0.2"
-  checksum: 10c0/d7b5eb4c5b9c341f961c1d3c30624f9a1e22b27b48a79a65b48120245a77c143827f75f5854628fef1a4bd4bc3cfaf06ce76497f3a574e3f933229c5e556e5fe
-  languageName: node
-  linkType: hard
-
 "tinyglobby@npm:^0.2.1":
   version: 0.2.9
   resolution: "tinyglobby@npm:0.2.9"
@@ -10408,6 +10410,16 @@ __metadata:
     fdir: "npm:^6.4.0"
     picomatch: "npm:^4.0.2"
   checksum: 10c0/f65f847afe70f56de069d4f1f9c3b0c1a76aaf2b0297656754734a83b9bac8e105b5534dfbea8599560476b88f7b747d0855370a957a07246d18b976addb87ec
+  languageName: node
+  linkType: hard
+
+"tinyglobby@npm:^0.2.9":
+  version: 0.2.10
+  resolution: "tinyglobby@npm:0.2.10"
+  dependencies:
+    fdir: "npm:^6.4.2"
+    picomatch: "npm:^4.0.2"
+  checksum: 10c0/ce946135d39b8c0e394e488ad59f4092e8c4ecd675ef1bcd4585c47de1b325e61ec6adfbfbe20c3c2bfa6fd674c5b06de2a2e65c433f752ae170aff11793e5ef
   languageName: node
   linkType: hard
 
