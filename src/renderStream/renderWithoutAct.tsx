@@ -32,6 +32,8 @@ function renderRoot(
     root: ReturnType<typeof createConcurrentRoot>
   },
 ): RenderResult<Queries, any, any> {
+  // @ts-expect-error this is not defined anywhere
+  globalThis.IS_REACT_ACT_ENVIRONMENT = false
   root.render(
     WrapperComponent ? React.createElement(WrapperComponent, null, ui) : ui,
   )
@@ -149,4 +151,16 @@ function createConcurrentRoot(container: ReactDOMClient.Container) {
       root.unmount()
     },
   }
+}
+
+export function cleanup() {
+  mountedRootEntries.forEach(({root, container}) => {
+    root.unmount()
+
+    if (container.parentNode === document.body) {
+      document.body.removeChild(container)
+    }
+  })
+  mountedRootEntries.length = 0
+  mountedContainers.clear()
 }

@@ -3,6 +3,10 @@ import {describe, test, expect} from '@jest/globals'
 import {renderToRenderStream} from '@testing-library/react-render-stream'
 import {userEvent} from '@testing-library/user-event'
 import * as React from 'react'
+
+// @ts-expect-error this is not defined anywhere
+globalThis.IS_REACT_ACT_ENVIRONMENT = false
+
 function CounterForm({
   value,
   onIncrement,
@@ -39,14 +43,14 @@ describe('snapshotDOM', () => {
       },
     )
     const utils = await renderResultPromise
-    const incrementButton = utils.getByText('Increment')
-    await userEvent.click(incrementButton)
-    await userEvent.click(incrementButton)
     {
       const {withinDOM} = await takeRender()
       const input = withinDOM().getByLabelText<HTMLInputElement>('Value')
       expect(input.value).toBe('0')
     }
+    const incrementButton = utils.getByText('Increment')
+    await userEvent.click(incrementButton)
+    await userEvent.click(incrementButton)
     {
       const {withinDOM} = await takeRender()
       const input = withinDOM().getByLabelText<HTMLInputElement>('Value')
