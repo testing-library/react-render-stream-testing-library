@@ -1,12 +1,13 @@
 import * as React from 'rehackt'
 
-import {render as baseRender, RenderOptions} from '@testing-library/react'
+import {RenderOptions} from '@testing-library/react'
 import {Assertable, markAssertable} from '../assertable.js'
 import {RenderInstance, type Render, type BaseRender} from './Render.js'
 import {type RenderStreamContextValue} from './context.js'
 import {RenderStreamContextProvider} from './context.js'
 import {disableActWarnings} from './disableActWarnings.js'
 import {syncQueries, type Queries, type SyncQueries} from './syncQueries.js'
+import {renderWithoutAct} from './renderWithoutAct.js'
 
 export type ValidSnapshot =
   // eslint-disable-next-line @typescript-eslint/no-invalid-void-type
@@ -81,7 +82,7 @@ export interface RenderStreamWithRenderFn<
   Snapshot extends ValidSnapshot,
   Q extends Queries = SyncQueries,
 > extends RenderStream<Snapshot, Q> {
-  render: typeof baseRender
+  render: typeof renderWithoutAct
 }
 
 export type RenderStreamOptions<
@@ -251,7 +252,7 @@ export function createRenderStream<
     ui: React.ReactNode,
     options?: RenderOptions<any, any, any>,
   ) => {
-    return baseRender(ui, {
+    return renderWithoutAct(ui, {
       ...options,
       wrapper: props => {
         const ParentWrapper = options?.wrapper ?? React.Fragment
@@ -262,7 +263,7 @@ export function createRenderStream<
         )
       },
     })
-  }) as typeof baseRender
+  }) as typeof renderWithoutAct
 
   Object.assign<typeof stream, typeof stream>(stream, {
     replaceSnapshot,

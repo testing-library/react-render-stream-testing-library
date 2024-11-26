@@ -18,3 +18,5 @@ export {renderHookToSnapshotStream} from './renderHookToSnapshotStream.js'
 export type {SnapshotStream} from './renderHookToSnapshotStream.js'
 
 export type {Assertable} from './assertable.js'
+
+export {renderWithoutAct} from './renderStream/renderWithoutAct.js'
