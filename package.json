@@ -65,7 +65,7 @@
   ],
   "dependencies": {
     "@testing-library/dom": "^10.4.0",
-    "@testing-library/react": "^16.0.1",
+    "@testing-library/react": "https://pkg.csb.dev/testing-library/react-testing-library/commit/571fbc81/@testing-library/react/_pkg.tgz",
     "jsdom": "^25.0.1",
     "rehackt": "^0.1.0"
   },

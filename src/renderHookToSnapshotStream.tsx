@@ -1,9 +1,13 @@
-import {RenderHookOptions} from '@testing-library/react'
+import {Queries, RenderHookOptions} from '@testing-library/react'
 import React from 'rehackt'
-import {createRenderStream} from './renderStream/createRenderStream.js'
+import {
+  createRenderStream,
+  RenderStream,
+} from './renderStream/createRenderStream.js'
 import {type NextRenderOptions} from './renderStream/createRenderStream.js'
 import {Render} from './renderStream/Render.js'
 import {Assertable, assertableSymbol, markAssertable} from './assertable.js'
+import {SyncQueries} from './renderStream/syncQueries.js'
 
 export interface SnapshotStream<Snapshot, Props> extends Assertable {
   /**
@@ -49,7 +53,11 @@ export function renderHookToSnapshotStream<ReturnValue, Props>(
   renderCallback: (props: Props) => ReturnValue,
   {initialProps, ...renderOptions}: RenderHookOptions<Props> = {},
 ): SnapshotStream<ReturnValue, Props> {
-  const {render, ...stream} = createRenderStream<{value: ReturnValue}, never>()
+  const {
+    render,
+    renderAsync: _,
+    ...stream
+  } = createRenderStream<{value: ReturnValue}, never>()
 
   const HookComponent: React.FC<{arg: Props}> = props => {
     stream.replaceSnapshot({value: renderCallback(props.arg)})
@@ -66,6 +74,47 @@ export function renderHookToSnapshotStream<ReturnValue, Props>(
   }
 
   return {
+    ...renderStreamToSnapshotStream(stream),
+    rerender,
+    unmount,
+  }
+}
+
+export async function renderHookToAsyncSnapshotStream<ReturnValue, Props>(
+  renderCallback: (props: Props) => ReturnValue,
+  {initialProps, ...renderOptions}: RenderHookOptions<Props> = {},
+): Promise<SnapshotStream<ReturnValue, Props>> {
+  const {
+    renderAsync,
+    render: _,
+    ...stream
+  } = createRenderStream<{value: ReturnValue}, never>()
+
+  const HookComponent: React.FC<{arg: Props}> = props => {
+    stream.replaceSnapshot({value: renderCallback(props.arg)})
+    return null
+  }
+
+  const {rerender: baseRerender, unmount} = await renderAsync(
+    <HookComponent arg={initialProps!} />,
+    renderOptions,
+  )
+
+  function rerender(rerenderCallbackProps: Props) {
+    return baseRerender(<HookComponent arg={rerenderCallbackProps} />)
+  }
+
+  return {
+    ...renderStreamToSnapshotStream(stream),
+    rerender,
+    unmount,
+  }
+}
+
+function renderStreamToSnapshotStream<Snapshot>(
+  stream: RenderStream<{value: Snapshot}, never>,
+): Omit<SnapshotStream<Snapshot, any>, 'rerender' | 'unmount'> {
+  return {
     [assertableSymbol]: stream,
     renders: stream.renders,
     totalSnapshotCount: stream.totalRenderCount,
@@ -81,7 +130,5 @@ export function renderHookToSnapshotStream<ReturnValue, Props>(
     async waitForNextSnapshot(options) {
       return (await stream.waitForNextRender(options)).snapshot.value
     },
-    rerender,
-    unmount,
   }
 }

@@ -1,6 +1,10 @@
 import * as React from 'rehackt'
 
-import {render as baseRender, RenderOptions} from '@testing-library/react'
+import {
+  render as baseRender,
+  renderAsync as baseRenderAsync,
+  RenderOptions,
+} from '@testing-library/react'
 import {Assertable, markAssertable} from '../assertable.js'
 import {RenderInstance, type Render, type BaseRender} from './Render.js'
 import {type RenderStreamContextValue} from './context.js'
@@ -82,6 +86,7 @@ export interface RenderStreamWithRenderFn<
   Q extends Queries = SyncQueries,
 > extends RenderStream<Snapshot, Q> {
   render: typeof baseRender
+  renderAsync: typeof baseRenderAsync
 }
 
 export type RenderStreamOptions<
@@ -264,6 +269,23 @@ export function createRenderStream<
     })
   }) as typeof baseRender
 
+  const renderAsync = ((
+    ui: React.ReactNode,
+    options?: RenderOptions<any, any, any>,
+  ) => {
+    return baseRenderAsync(ui, {
+      ...options,
+      wrapper: (props: any) => {
+        const ParentWrapper = options?.wrapper ?? React.Fragment
+        return (
+          <ParentWrapper>
+            <Wrapper>{props.children}</Wrapper>
+          </ParentWrapper>
+        )
+      },
+    })
+  }) as typeof baseRenderAsync
+
   Object.assign<typeof stream, typeof stream>(stream, {
     replaceSnapshot,
     mergeSnapshot,
@@ -356,6 +378,7 @@ export function createRenderStream<
       return nextRender
     },
     render,
+    renderAsync,
   })
   return stream
 }
