@@ -18,13 +18,16 @@ export function userEventWithoutAct(
           async function wrapped(this: any, ...args: any[]) {
             const config = getConfig()
             // eslint-disable-next-line @typescript-eslint/unbound-method
-            const orig = config.eventWrapper
+            const eventWrapper = config.eventWrapper
+            // eslint-disable-next-line @typescript-eslint/unbound-method
+            const asyncWrapper = config.asyncWrapper
             try {
               config.eventWrapper = cb => cb()
               // eslint-disable-next-line @typescript-eslint/return-await
               return await (value as Function).apply(this, args)
             } finally {
-              config.eventWrapper = orig
+              config.asyncWrapper = asyncWrapper
+              config.eventWrapper = eventWrapper
             }
           },
         ]
