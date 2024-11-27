@@ -96,7 +96,7 @@ export type RenderWithoutActAsync = {
       | Omit<RenderOptions, 'hydrate' | 'legacyRoot' | 'queries'>
       | undefined,
   ): Promise<
-    RenderResult<Queries, ReactDOMClient.Container, ReactDOMClient.Container>
+    RenderResult<SyncQueries, ReactDOMClient.Container, ReactDOMClient.Container>
   >
 }
 
