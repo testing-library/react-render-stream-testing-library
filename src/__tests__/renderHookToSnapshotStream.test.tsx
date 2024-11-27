@@ -4,10 +4,6 @@ import {EventEmitter} from 'node:events'
 import {test, expect} from '@jest/globals'
 import {renderHookToSnapshotStream} from '@testing-library/react-render-stream'
 import * as React from 'react'
-import {withDisabledActWarnings} from '../__testHelpers__/withDisabledActWarnings.js'
-
-// @ts-expect-error this is not defined anywhere
-globalThis.IS_REACT_ACT_ENVIRONMENT = false
 
 const testEvents = new EventEmitter<{
   rerenderWithValue: [unknown]
@@ -19,7 +15,7 @@ function useRerenderEvents(initialValue: unknown) {
     onChange => {
       const cb = (value: unknown) => {
         lastValueRef.current = value
-        withDisabledActWarnings(onChange)
+        onChange()
       }
       testEvents.addListener('rerenderWithValue', cb)
       return () => {

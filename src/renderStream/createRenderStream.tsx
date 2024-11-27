@@ -2,12 +2,12 @@ import * as React from 'rehackt'
 
 import {RenderOptions} from '@testing-library/react'
 import {Assertable, markAssertable} from '../assertable.js'
+import {disableActEnvironment} from '../disableActEnvironment.js'
+import {renderWithoutAct, RenderWithoutActAsync} from '../renderWithoutAct.js'
 import {RenderInstance, type Render, type BaseRender} from './Render.js'
 import {type RenderStreamContextValue} from './context.js'
 import {RenderStreamContextProvider} from './context.js'
-import {disableActWarnings} from './disableActWarnings.js'
 import {syncQueries, type Queries, type SyncQueries} from './syncQueries.js'
-import {renderWithoutAct, RenderWithoutActAsync} from './renderWithoutAct.js'
 
 export type ValidSnapshot =
   // eslint-disable-next-line @typescript-eslint/no-invalid-void-type
@@ -299,7 +299,7 @@ export function createRenderStream<
       // In many cases we do not control the resolution of the suspended
       // promise which results in noisy tests when the profiler due to
       // repeated act warnings.
-      const disabledActWarnings = disableActWarnings()
+      const disabledAct = disableActEnvironment()
 
       let error: unknown
 
@@ -317,7 +317,7 @@ export function createRenderStream<
         if (!(error && error instanceof WaitForRenderTimeoutError)) {
           iteratorPosition++
         }
-        disabledActWarnings.cleanup()
+        disabledAct.cleanup()
       }
     }, stream),
     getCurrentRender() {

@@ -7,7 +7,6 @@ import {
 } from '@testing-library/react-render-stream'
 import * as React from 'react'
 import {getExpectErrorMessage} from '../../__testHelpers__/getCleanedErrorMessage.js'
-import {withDisabledActWarnings} from '../../__testHelpers__/withDisabledActWarnings.js'
 
 const testEvents = new EventEmitter<{
   rerender: []
@@ -16,7 +15,7 @@ const testEvents = new EventEmitter<{
 function useRerender() {
   const [, rerender] = React.useReducer(c => c + 1, 0)
   React.useEffect(() => {
-    const cb = () => void withDisabledActWarnings(rerender)
+    const cb = () => void rerender()
 
     testEvents.addListener('rerender', cb)
     return () => {

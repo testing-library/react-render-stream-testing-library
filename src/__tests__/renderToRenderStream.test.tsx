@@ -7,9 +7,6 @@ import {
 import {userEvent as baseUserEvent} from '@testing-library/user-event'
 import * as React from 'react'
 
-// @ts-expect-error this is not defined anywhere
-globalThis.IS_REACT_ACT_ENVIRONMENT = false
-
 const userEvent = userEventWithoutAct(baseUserEvent)
 
 function CounterForm({

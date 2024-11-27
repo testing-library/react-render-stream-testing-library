@@ -1,7 +1,7 @@
-import {disableActWarnings} from '../renderStream/disableActWarnings.js'
+import {disableActEnvironment} from './disableActEnvironment.js'
 
-export function withDisabledActWarnings<T>(cb: () => T): T {
-  const disabledActWarnings = disableActWarnings()
+export function withDisabledActEnvironment<T>(cb: () => T): T {
+  const disabledActWarnings = disableActEnvironment()
   let result: T
   try {
     result = cb()

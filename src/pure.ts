@@ -19,5 +19,7 @@ export type {SnapshotStream} from './renderHookToSnapshotStream.js'
 
 export type {Assertable} from './assertable.js'
 
-export {renderWithoutAct, cleanup} from './renderStream/renderWithoutAct.js'
+export {renderWithoutAct, cleanup} from './renderWithoutAct.js'
 export {userEventWithoutAct} from './useWithoutAct.js'
+export {disableActEnvironment} from './disableActEnvironment.js'
+export {withDisabledActEnvironment} from './withDisabledActEnvironment.js'

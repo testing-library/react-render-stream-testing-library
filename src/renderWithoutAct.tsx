@@ -5,9 +5,10 @@ import {
   Queries,
   type RenderOptions,
   type RenderResult,
-} from '@testing-library/react'
+} from '@testing-library/react/pure.js'
 import React from 'react'
-import {SyncQueries} from './syncQueries.js'
+import {SyncQueries} from './renderStream/syncQueries.js'
+import {withDisabledActEnvironment} from './withDisabledActEnvironment.js'
 
 // Ideally we'd just use a WeakMap where containers are keys and roots are values.
 // We use two variables so that we can bail out in constant time when we render with a new container (most common use case)
@@ -32,8 +33,6 @@ function renderRoot(
     root: ReturnType<typeof createConcurrentRoot>
   },
 ): RenderResult<Queries, any, any> {
-  // @ts-expect-error this is not defined anywhere
-  globalThis.IS_REACT_ACT_ENVIRONMENT = false
   root.render(
     WrapperComponent ? React.createElement(WrapperComponent, null, ui) : ui,
   )
@@ -164,14 +163,16 @@ export function renderWithoutAct(
 }
 
 function createConcurrentRoot(container: ReactDOMClient.Container) {
-  const root = ReactDOMClient.createRoot(container)
+  const root = withDisabledActEnvironment(() =>
+    ReactDOMClient.createRoot(container),
+  )
 
   return {
     render(element: React.ReactNode) {
-      root.render(element)
+      withDisabledActEnvironment(() => root.render(element))
     },
     unmount() {
-      root.unmount()
+      withDisabledActEnvironment(() => root.unmount())
     },
   }
 }
