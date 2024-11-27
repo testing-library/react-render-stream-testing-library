@@ -78,6 +78,29 @@ function renderRoot(
   } as RenderResult<Queries, any, any> // TODO clean up more
 }
 
+export type RenderWithoutActAsync = {
+  <
+    Q extends Queries = SyncQueries,
+    Container extends ReactDOMClient.Container = HTMLElement,
+    BaseElement extends ReactDOMClient.Container = Container,
+  >(
+    this: any,
+    ui: React.ReactNode,
+    options: //Omit<
+    RenderOptions<Q, Container, BaseElement>,
+    //'hydrate' | 'legacyRoot'  >,
+  ): Promise<RenderResult<Q, Container, BaseElement>>
+  (
+    this: any,
+    ui: React.ReactNode,
+    options?:
+      | Omit<RenderOptions, 'hydrate' | 'legacyRoot' | 'queries'>
+      | undefined,
+  ): Promise<
+    RenderResult<Queries, ReactDOMClient.Container, ReactDOMClient.Container>
+  >
+}
+
 export function renderWithoutAct<
   Q extends Queries = SyncQueries,
   Container extends ReactDOMClient.Container = HTMLElement,

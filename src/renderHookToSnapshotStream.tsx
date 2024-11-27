@@ -45,10 +45,10 @@ export interface SnapshotStream<Snapshot, Props> extends Assertable {
   unmount: () => void
 }
 
-export function renderHookToSnapshotStream<ReturnValue, Props>(
+export async function renderHookToSnapshotStream<ReturnValue, Props>(
   renderCallback: (props: Props) => ReturnValue,
   {initialProps, ...renderOptions}: RenderHookOptions<Props> = {},
-): SnapshotStream<ReturnValue, Props> {
+): Promise<SnapshotStream<ReturnValue, Props>> {
   const {render, ...stream} = createRenderStream<{value: ReturnValue}, never>()
 
   const HookComponent: React.FC<{arg: Props}> = props => {
@@ -56,7 +56,7 @@ export function renderHookToSnapshotStream<ReturnValue, Props>(
     return null
   }
 
-  const {rerender: baseRerender, unmount} = render(
+  const {rerender: baseRerender, unmount} = await render(
     <HookComponent arg={initialProps!} />,
     renderOptions,
   )

@@ -33,16 +33,16 @@ function useRerenderEvents(initialValue: unknown) {
 }
 
 test('basic functionality', async () => {
-  const {takeSnapshot} = renderHookToSnapshotStream(useRerenderEvents, {
+  const {takeSnapshot} = await renderHookToSnapshotStream(useRerenderEvents, {
     initialProps: 'initial',
   })
+  testEvents.emit('rerenderWithValue', 'value')
+  await Promise.resolve()
+  testEvents.emit('rerenderWithValue', 'value2')
   {
     const snapshot = await takeSnapshot()
     expect(snapshot).toBe('initial')
   }
-  testEvents.emit('rerenderWithValue', 'value')
-  await Promise.resolve()
-  testEvents.emit('rerenderWithValue', 'value2')
   {
     const snapshot = await takeSnapshot()
     expect(snapshot).toBe('value')
@@ -62,15 +62,15 @@ test.each<[type: string, initialValue: unknown, ...nextValues: unknown[]]>([
   ['null/undefined', null, undefined, null],
   ['undefined/null', undefined, null, undefined],
 ])('works with %s', async (_, initialValue, ...nextValues) => {
-  const {takeSnapshot} = renderHookToSnapshotStream(useRerenderEvents, {
+  const {takeSnapshot} = await renderHookToSnapshotStream(useRerenderEvents, {
     initialProps: initialValue,
   })
-  expect(await takeSnapshot()).toBe(initialValue)
   for (const nextValue of nextValues) {
     testEvents.emit('rerenderWithValue', nextValue)
     // allow for a render to happen
     await Promise.resolve()
   }
+  expect(await takeSnapshot()).toBe(initialValue)
   for (const nextValue of nextValues) {
     expect(await takeSnapshot()).toBe(nextValue)
   }

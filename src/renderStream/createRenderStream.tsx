@@ -7,7 +7,7 @@ import {type RenderStreamContextValue} from './context.js'
 import {RenderStreamContextProvider} from './context.js'
 import {disableActWarnings} from './disableActWarnings.js'
 import {syncQueries, type Queries, type SyncQueries} from './syncQueries.js'
-import {renderWithoutAct} from './renderWithoutAct.js'
+import {renderWithoutAct, RenderWithoutActAsync} from './renderWithoutAct.js'
 
 export type ValidSnapshot =
   // eslint-disable-next-line @typescript-eslint/no-invalid-void-type
@@ -82,7 +82,7 @@ export interface RenderStreamWithRenderFn<
   Snapshot extends ValidSnapshot,
   Q extends Queries = SyncQueries,
 > extends RenderStream<Snapshot, Q> {
-  render: typeof renderWithoutAct
+  render: RenderWithoutActAsync
 }
 
 export type RenderStreamOptions<
@@ -248,11 +248,11 @@ export function createRenderStream<
     )
   }
 
-  const render = ((
+  const render: RenderWithoutActAsync = (async (
     ui: React.ReactNode,
     options?: RenderOptions<any, any, any>,
   ) => {
-    return renderWithoutAct(ui, {
+    const ret = renderWithoutAct(ui, {
       ...options,
       wrapper: props => {
         const ParentWrapper = options?.wrapper ?? React.Fragment
@@ -263,7 +263,11 @@ export function createRenderStream<
         )
       },
     })
-  }) as typeof renderWithoutAct
+    if (stream.renders.length === 0) {
+      await stream.waitForNextRender()
+    }
+    return ret
+  }) as unknown as RenderWithoutActAsync // TODO
 
   Object.assign<typeof stream, typeof stream>(stream, {
     replaceSnapshot,

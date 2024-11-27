@@ -1,21 +1,15 @@
 /* eslint-disable @typescript-eslint/no-use-before-define */
 import {jest, describe, test, expect} from '@jest/globals'
-import {createRenderStream} from '@testing-library/react-render-stream'
-//import {userEvent} from '@testing-library/user-event'
+import {
+  createRenderStream,
+  userEventWithoutAct,
+} from '@testing-library/react-render-stream'
+import {userEvent as baseUserEvent} from '@testing-library/user-event'
 import * as React from 'react'
 import {ErrorBoundary} from 'react-error-boundary'
 import {getExpectErrorMessage} from '../../__testHelpers__/getCleanedErrorMessage.js'
 
-// @ts-expect-error this is not defined anywhere
-globalThis.IS_REACT_ACT_ENVIRONMENT = false
-
-async function click(element: HTMLElement) {
-  const opts = {bubbles: true, cancelable: true, buttons: 1}
-  element.dispatchEvent(new Event('mousedown', opts))
-  await new Promise(r => setTimeout(r, 50))
-  element.dispatchEvent(new Event('mouseup', opts))
-  element.dispatchEvent(new Event('click', opts))
-}
+const userEvent = userEventWithoutAct(baseUserEvent)
 
 function CounterForm({
   value,
@@ -49,15 +43,15 @@ describe('snapshotDOM', () => {
     const {takeRender, render} = createRenderStream({
       snapshotDOM: true,
     })
-    const utils = render(<Counter />)
+    const utils = await render(<Counter />)
+    const incrementButton = utils.getByText('Increment')
+    await userEvent.click(incrementButton)
+    await userEvent.click(incrementButton)
     {
       const {withinDOM} = await takeRender()
       const input = withinDOM().getByLabelText<HTMLInputElement>('Value')
       expect(input.value).toBe('0')
     }
-    const incrementButton = utils.getByText('Increment') as HTMLElement // TODO
-    await click(incrementButton)
-    await click(incrementButton)
     {
       const {withinDOM} = await takeRender()
       // a one-off to test that `queryBy` works and accepts a type argument
@@ -82,12 +76,12 @@ describe('snapshotDOM', () => {
     const {takeRender, render} = createRenderStream({
       snapshotDOM: true,
     })
-    render(<Counter />)
+    await render(<Counter />)
     {
       const {withinDOM} = await takeRender()
       const snapshotIncrementButton = withinDOM().getByText('Increment')
       try {
-        await click(snapshotIncrementButton)
+        await userEvent.click(snapshotIncrementButton)
       } catch (error) {
         expect(error).toMatchInlineSnapshot(`
 [Error: Uncaught [Error: 
@@ -114,7 +108,7 @@ describe('snapshotDOM', () => {
       snapshotDOM: true,
       queries,
     })
-    render(<Component />)
+    await render(<Component />)
 
     const {withinDOM} = await takeRender()
     expect(withinDOM().foo()).toBe(null)
@@ -140,14 +134,14 @@ describe('replaceSnapshot', () => {
     const {takeRender, replaceSnapshot, render} = createRenderStream<{
       value: number
     }>()
-    const utils = render(<Counter />)
+    const utils = await render(<Counter />)
+    const incrementButton = utils.getByText('Increment')
+    await userEvent.click(incrementButton)
+    await userEvent.click(incrementButton)
     {
       const {snapshot} = await takeRender()
       expect(snapshot).toEqual({value: 0})
     }
-    const incrementButton = utils.getByText('Increment') as HTMLElement // TODO
-    await click(incrementButton)
-    await click(incrementButton)
     {
       const {snapshot} = await takeRender()
       expect(snapshot).toEqual({value: 1})
@@ -170,15 +164,14 @@ describe('replaceSnapshot', () => {
       const {takeRender, replaceSnapshot, render} = createRenderStream({
         initialSnapshot: {unrelatedValue: 'unrelated', value: -1},
       })
-      const utils = render(<Counter />)
+      const utils = await render(<Counter />)
+      const incrementButton = utils.getByText('Increment')
+      await userEvent.click(incrementButton)
+      await userEvent.click(incrementButton)
       {
         const {snapshot} = await takeRender()
         expect(snapshot).toEqual({unrelatedValue: 'unrelated', value: 0})
       }
-
-      const incrementButton = utils.getByText('Increment') as HTMLElement // TODO
-      await click(incrementButton)
-      await click(incrementButton)
       {
         const {snapshot} = await takeRender()
         expect(snapshot).toEqual({unrelatedValue: 'unrelated', value: 1})
@@ -204,7 +197,7 @@ describe('replaceSnapshot', () => {
 
       const spy = jest.spyOn(console, 'error')
       spy.mockImplementation(() => {})
-      render(
+      await render(
         <ErrorBoundary
           fallbackRender={({error}) => {
             // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
@@ -215,8 +208,6 @@ describe('replaceSnapshot', () => {
           <Counter />
         </ErrorBoundary>,
       )
-      await new Promise(r => setTimeout(r, 10))
-
       spy.mockRestore()
 
       expect(caughtError!).toMatchInlineSnapshot(
@@ -244,12 +235,11 @@ describe('onRender', () => {
         expect(info.count).toBe(info.snapshot.value + 1)
       },
     })
-    const utils = render(<Counter />)
+    const utils = await render(<Counter />)
+    const incrementButton = utils.getByText('Increment')
+    await userEvent.click(incrementButton)
+    await userEvent.click(incrementButton)
     await takeRender()
-
-    const incrementButton = utils.getByText('Increment') as HTMLElement // TODO
-    await click(incrementButton)
-    await click(incrementButton)
     await takeRender()
     await takeRender()
   })
@@ -268,11 +258,11 @@ describe('onRender', () => {
       },
     })
 
-    const utils = render(<Counter />)
+    const utils = await render(<Counter />)
+    const incrementButton = utils.getByText('Increment')
+    await userEvent.click(incrementButton)
+    await userEvent.click(incrementButton)
     await takeRender()
-    const incrementButton = utils.getByText('Increment') as HTMLElement // TODO
-    await click(incrementButton)
-    await click(incrementButton)
     const error = await getExpectErrorMessage(takeRender())
 
     expect(error).toMatchInlineSnapshot(`

@@ -20,3 +20,4 @@ export type {SnapshotStream} from './renderHookToSnapshotStream.js'
 export type {Assertable} from './assertable.js'
 
 export {renderWithoutAct, cleanup} from './renderStream/renderWithoutAct.js'
+export {userEventWithoutAct} from './useWithoutAct.js'
