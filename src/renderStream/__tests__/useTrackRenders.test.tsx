@@ -61,7 +61,7 @@ describe('non-suspense use cases', () => {
 
   test('basic functionality', async () => {
     const {takeRender, render} = createRenderStream()
-    render(<App />)
+    await render(<App />)
     asyncAction.resolve('data')
     {
       const {renderedComponents} = await takeRender()
@@ -75,7 +75,7 @@ describe('non-suspense use cases', () => {
 
   test('error path', async () => {
     const {takeRender, render} = createRenderStream()
-    render(<App />)
+    await render(<App />)
     asyncAction.reject(new Error('error'))
     {
       const {renderedComponents} = await takeRender()
@@ -119,7 +119,7 @@ describe('suspense use cases', () => {
 
   test('basic functionality', async () => {
     const {takeRender, render} = createRenderStream()
-    render(<App />)
+    await render(<App />)
     asyncAction.resolve('data')
     {
       const {renderedComponents} = await takeRender()
@@ -133,7 +133,7 @@ describe('suspense use cases', () => {
 
   test('ErrorBoundary', async () => {
     const {takeRender, render} = createRenderStream()
-    render(<App />)
+    await render(<App />)
 
     const spy = jest.spyOn(console, 'error')
     spy.mockImplementation(() => {})
@@ -156,7 +156,7 @@ test('specifying the `name` option', async () => {
     return <>{children}</>
   }
   const {takeRender, render} = createRenderStream()
-  render(
+  await render(
     <>
       <NamedComponent name="Darth Vader">
         <NamedComponent name="Luke">

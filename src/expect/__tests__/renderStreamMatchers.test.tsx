@@ -34,7 +34,7 @@ describe('toRerender', () => {
   test('basic functionality', async () => {
     const {takeRender, render} = createRenderStream({})
 
-    render(<RerenderingComponent />)
+    await render(<RerenderingComponent />)
     await expect(takeRender).toRerender()
     await takeRender()
 
@@ -48,7 +48,7 @@ describe('toRerender', () => {
   test('works with renderStream object', async () => {
     const renderStream = createRenderStream({})
 
-    renderStream.render(<RerenderingComponent />)
+    await renderStream.render(<RerenderingComponent />)
     await expect(renderStream).toRerender()
     await renderStream.takeRender()
 
@@ -60,7 +60,7 @@ describe('toRerender', () => {
   })
 
   test('works with takeSnapshot function', async () => {
-    const {takeSnapshot} = renderHookToSnapshotStream(() => useRerender())
+    const {takeSnapshot} = await renderHookToSnapshotStream(() => useRerender())
 
     await expect(takeSnapshot).toRerender()
     await takeSnapshot()
@@ -73,7 +73,7 @@ describe('toRerender', () => {
   })
 
   test('works with snapshotStream', async () => {
-    const snapshotStream = renderHookToSnapshotStream(() => useRerender())
+    const snapshotStream = await renderHookToSnapshotStream(() => useRerender())
 
     await expect(snapshotStream).toRerender()
     await snapshotStream.takeSnapshot()
@@ -88,7 +88,7 @@ describe('toRerender', () => {
   test("errors when it rerenders, but shouldn't", async () => {
     const {takeRender, render} = createRenderStream({})
 
-    render(<RerenderingComponent />)
+    await render(<RerenderingComponent />)
     await expect(takeRender).toRerender()
     await takeRender()
 
@@ -106,7 +106,7 @@ Expected component to not rerender, but it did.
   test("errors when it should rerender, but doesn't", async () => {
     const {takeRender, render} = createRenderStream({})
 
-    render(<RerenderingComponent />)
+    await render(<RerenderingComponent />)
     await expect(takeRender).toRerender()
     await takeRender()
 
@@ -123,7 +123,7 @@ describe('toRenderExactlyTimes', () => {
   test('basic functionality', async () => {
     const {takeRender, render} = createRenderStream({})
 
-    render(<RerenderingComponent />)
+    await render(<RerenderingComponent />)
     testEvents.emit('rerender')
 
     await expect(takeRender).toRenderExactlyTimes(2)
@@ -132,21 +132,21 @@ describe('toRenderExactlyTimes', () => {
   test('works with renderStream object', async () => {
     const renderStream = createRenderStream({})
 
-    renderStream.render(<RerenderingComponent />)
+    await renderStream.render(<RerenderingComponent />)
     testEvents.emit('rerender')
 
     await expect(renderStream).toRenderExactlyTimes(2)
   })
 
   test('works with takeSnapshot function', async () => {
-    const {takeSnapshot} = renderHookToSnapshotStream(() => useRerender())
+    const {takeSnapshot} = await renderHookToSnapshotStream(() => useRerender())
     testEvents.emit('rerender')
 
     await expect(takeSnapshot).toRenderExactlyTimes(2)
   })
 
   test('works with snapshotStream', async () => {
-    const snapshotStream = renderHookToSnapshotStream(() => useRerender())
+    const snapshotStream = await renderHookToSnapshotStream(() => useRerender())
     testEvents.emit('rerender')
 
     await expect(snapshotStream).toRenderExactlyTimes(2)
@@ -155,7 +155,7 @@ describe('toRenderExactlyTimes', () => {
   test('errors when the count of rerenders is wrong', async () => {
     const {takeRender, render} = createRenderStream({})
 
-    render(<RerenderingComponent />)
+    await render(<RerenderingComponent />)
     testEvents.emit('rerender')
 
     const error = await getExpectErrorMessage(
@@ -172,7 +172,7 @@ It rendered 2 times.
   test('errors when the count of rerenders is right (inverted)', async () => {
     const {takeRender, render} = createRenderStream({})
 
-    render(<RerenderingComponent />)
+    await render(<RerenderingComponent />)
     testEvents.emit('rerender')
 
     const error = await getExpectErrorMessage(
