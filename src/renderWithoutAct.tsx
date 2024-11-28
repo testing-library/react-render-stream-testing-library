@@ -1,4 +1,5 @@
 import * as ReactDOMClient from 'react-dom/client'
+import * as ReactDOM from 'react-dom'
 import {
   getQueriesForElement,
   prettyDOM,
@@ -96,7 +97,11 @@ export type RenderWithoutActAsync = {
       | Omit<RenderOptions, 'hydrate' | 'legacyRoot' | 'queries'>
       | undefined,
   ): Promise<
-    RenderResult<SyncQueries, ReactDOMClient.Container, ReactDOMClient.Container>
+    RenderResult<
+      SyncQueries,
+      ReactDOMClient.Container,
+      ReactDOMClient.Container
+    >
   >
 }
 
@@ -141,8 +146,11 @@ export function renderWithoutAct(
   let root: ReturnType<typeof createConcurrentRoot>
   // eslint-disable-next-line no-negated-condition -- we want to map the evolution of this over time. The root is created first. Only later is it re-used so we don't want to read the case that happens later first.
   if (!mountedContainers.has(container)) {
-    root = createConcurrentRoot(container)
-
+    root = (
+      ReactDOM.version.startsWith('16') || ReactDOM.version.startsWith('17')
+        ? createLegacyRoot
+        : createConcurrentRoot
+    )(container)
     mountedRootEntries.push({container, root})
     // we'll add it to the mounted containers regardless of whether it's actually
     // added to document.body so the cleanup method works regardless of whether
@@ -160,6 +168,17 @@ export function renderWithoutAct(
   }
 
   return renderRoot(ui, {baseElement, container, queries, wrapper, root: root!})
+}
+
+function createLegacyRoot(container: ReactDOMClient.Container) {
+  return {
+    render(element: React.ReactNode) {
+      ReactDOM.render(element as unknown as React.ReactElement, container)
+    },
+    unmount() {
+      ReactDOM.unmountComponentAtNode(container)
+    },
+  }
 }
 
 function createConcurrentRoot(container: ReactDOMClient.Container) {
