@@ -173,10 +173,14 @@ export function renderWithoutAct(
 function createLegacyRoot(container: ReactDOMClient.Container) {
   return {
     render(element: React.ReactNode) {
-      ReactDOM.render(element as unknown as React.ReactElement, container)
+      withDisabledActEnvironment(() =>
+        ReactDOM.render(element as unknown as React.ReactElement, container),
+      )
     },
     unmount() {
-      ReactDOM.unmountComponentAtNode(container)
+      withDisabledActEnvironment(() =>
+        ReactDOM.unmountComponentAtNode(container),
+      )
     },
   }
 }
