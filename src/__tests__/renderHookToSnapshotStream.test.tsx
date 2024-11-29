@@ -1,6 +1,7 @@
 /* eslint-disable no-await-in-loop */
 /* eslint-disable @typescript-eslint/no-unnecessary-condition */
 import {EventEmitter} from 'node:events'
+import {scheduler} from 'node:timers/promises'
 import {test, expect} from '@jest/globals'
 import {renderHookToSnapshotStream} from '@testing-library/react-render-stream'
 import * as React from 'react'
@@ -33,7 +34,7 @@ test('basic functionality', async () => {
     initialProps: 'initial',
   })
   testEvents.emit('rerenderWithValue', 'value')
-  await Promise.resolve()
+  await scheduler.wait(10)
   testEvents.emit('rerenderWithValue', 'value2')
   {
     const snapshot = await takeSnapshot()
