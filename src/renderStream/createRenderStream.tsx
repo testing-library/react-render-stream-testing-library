@@ -279,18 +279,27 @@ export function createRenderStream<
       return stream.renders.length
     },
     async peekRender(options: NextRenderOptions = {}) {
-      if (iteratorPosition < stream.renders.length) {
-        const peekedRender = stream.renders[iteratorPosition]
+      try {
+        if (iteratorPosition < stream.renders.length) {
+          const peekedRender = stream.renders[iteratorPosition]
 
-        if (peekedRender.phase === 'snapshotError') {
-          throw peekedRender.error
+          if (peekedRender.phase === 'snapshotError') {
+            throw peekedRender.error
+          }
+
+          return peekedRender
         }
-
-        return peekedRender
+        return await stream
+          .waitForNextRender(options)
+          .catch(rethrowWithCapturedStackTrace(stream.peekRender))
+      } finally {
+        /** drain microtask queue */
+        await new Promise<void>(resolve => {
+          setTimeout(() => {
+            resolve()
+          }, 0)
+        })
       }
-      return stream
-        .waitForNextRender(options)
-        .catch(rethrowWithCapturedStackTrace(stream.peekRender))
     },
     takeRender: markAssertable(async function takeRender(
       options: NextRenderOptions = {},
