@@ -2,7 +2,7 @@ import {
   Queries,
   type RenderOptions as BaseOptions,
   type RenderResult as BaseResult,
-} from '@testing-library/react'
+} from '@testing-library/react/pure.js'
 import {
   createRenderStream,
   type RenderStreamOptions,

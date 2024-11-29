@@ -1,4 +1,4 @@
-import {type RenderHookOptions} from '@testing-library/react'
+import {type RenderHookOptions} from '@testing-library/react/pure.js'
 import React from 'rehackt'
 import {createRenderStream} from './renderStream/createRenderStream.js'
 import {type NextRenderOptions} from './renderStream/createRenderStream.js'

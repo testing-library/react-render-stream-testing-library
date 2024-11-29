@@ -1,8 +1,7 @@
 import * as React from 'rehackt'
 
-import {RenderOptions} from '@testing-library/react'
+import {type RenderOptions} from '@testing-library/react/pure.js'
 import {Assertable, markAssertable} from '../assertable.js'
-import {disableActEnvironment} from '../disableActEnvironment.js'
 import {renderWithoutAct, RenderWithoutActAsync} from '../renderWithoutAct.js'
 import {RenderInstance, type Render, type BaseRender} from './Render.js'
 import {type RenderStreamContextValue} from './context.js'
