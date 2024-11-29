@@ -173,41 +173,49 @@ export function renderWithoutAct(
 function createLegacyRoot(container: ReactDOMClient.Container) {
   return {
     render(element: React.ReactNode) {
-      withDisabledActEnvironment(() =>
-        ReactDOM.render(element as unknown as React.ReactElement, container),
-      )
+      ReactDOM.render(element as unknown as React.ReactElement, container)
     },
     unmount() {
-      withDisabledActEnvironment(() =>
-        ReactDOM.unmountComponentAtNode(container),
-      )
+      ReactDOM.unmountComponentAtNode(container)
     },
   }
 }
 
 function createConcurrentRoot(container: ReactDOMClient.Container) {
-  const root = withDisabledActEnvironment(() =>
-    ReactDOMClient.createRoot(container),
-  )
+  const anyThis = globalThis as any as {IS_REACT_ACT_ENVIRONMENT?: boolean}
+  if (anyThis.IS_REACT_ACT_ENVIRONMENT) {
+    throw new Error(`Tried to create a React root for a render stream inside a React act environment.
+This is not supported. Please use \`disableActEnvironment\` to disable the act environment for this test.`)
+  }
+  const root = ReactDOMClient.createRoot(container)
 
   return {
     render(element: React.ReactNode) {
-      withDisabledActEnvironment(() => root.render(element))
+      if (anyThis.IS_REACT_ACT_ENVIRONMENT) {
+        throw new Error(`Tried to render a render stream inside a React act environment.
+    This is not supported. Please use \`disableActEnvironment\` to disable the act environment for this test.`)
+      }
+      root.render(element)
     },
     unmount() {
-      withDisabledActEnvironment(() => root.unmount())
+      root.unmount()
     },
   }
 }
 
 export function cleanup() {
-  mountedRootEntries.forEach(({root, container}) => {
-    root.unmount()
+  // there is a good chance this happens outside of a test, where the user
+  // has no control over enabling or disabling the React Act environment,
+  // so we do it for them here.
+  withDisabledActEnvironment(() => {
+    mountedRootEntries.forEach(({root, container}) => {
+      root.unmount()
 
-    if (container.parentNode === document.body) {
-      document.body.removeChild(container)
-    }
+      if (container.parentNode === document.body) {
+        document.body.removeChild(container)
+      }
+    })
+    mountedRootEntries.length = 0
+    mountedContainers.clear()
   })
-  mountedRootEntries.length = 0
-  mountedContainers.clear()
 }

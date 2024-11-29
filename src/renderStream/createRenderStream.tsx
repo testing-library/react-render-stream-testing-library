@@ -296,11 +296,6 @@ export function createRenderStream<
     takeRender: markAssertable(async function takeRender(
       options: NextRenderOptions = {},
     ) {
-      // In many cases we do not control the resolution of the suspended
-      // promise which results in noisy tests when the profiler due to
-      // repeated act warnings.
-      const disabledAct = disableActEnvironment()
-
       let error: unknown
 
       try {
@@ -317,7 +312,6 @@ export function createRenderStream<
         if (!(error && error instanceof WaitForRenderTimeoutError)) {
           iteratorPosition++
         }
-        disabledAct.cleanup()
       }
     }, stream),
     getCurrentRender() {

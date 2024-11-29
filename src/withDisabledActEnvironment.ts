@@ -2,13 +2,13 @@ import {disableActEnvironment} from './disableActEnvironment.js'
 
 export function withDisabledActEnvironment<T>(cb: () => T): T {
   const disabledActWarnings = disableActEnvironment()
-  let result: T
+  let result: T | undefined
   try {
     result = cb()
-    return result instanceof Promise
-      ? (result.finally(disabledActWarnings.cleanup) as T)
-      : result
+    return result
   } finally {
-    disabledActWarnings.cleanup()
+    if (result != null && result instanceof Promise) {
+      void result.finally(disabledActWarnings.cleanup)
+    } else disabledActWarnings.cleanup()
   }
 }
