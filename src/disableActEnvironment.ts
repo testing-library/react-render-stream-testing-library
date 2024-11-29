@@ -31,6 +31,9 @@ const dispose: typeof Symbol.dispose =
  *
  *   cleanup();
  * })
+ *
+ * For more context on what `act` is and why you shouldn't use it in renderStream tests,
+ * https://github.com/reactwg/react-18/discussions/102 is probably the best resource we have.
  */
 export function disableActEnvironment(): {cleanup: () => void} & Disposable {
   const anyThis = globalThis as any as {IS_REACT_ACT_ENVIRONMENT?: boolean}
