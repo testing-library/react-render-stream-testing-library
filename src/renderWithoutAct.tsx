@@ -1,12 +1,14 @@
 import * as ReactDOMClient from 'react-dom/client'
 import * as ReactDOM from 'react-dom'
 import {
-  getQueriesForElement,
-  prettyDOM,
-  Queries,
   type RenderOptions,
   type RenderResult,
 } from '@testing-library/react/pure.js'
+import {
+  getQueriesForElement,
+  prettyDOM,
+  type Queries,
+} from '@testing-library/dom'
 import React from 'react'
 import {SyncQueries} from './renderStream/syncQueries.js'
 import {withDisabledActEnvironment} from './withDisabledActEnvironment.js'
