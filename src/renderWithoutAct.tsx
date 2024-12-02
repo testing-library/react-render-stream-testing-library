@@ -209,6 +209,11 @@ This is not supported. Please use \`disableActEnvironment\` to disable the act e
 }
 
 export function cleanup() {
+  if (!mountedRootEntries.length) {
+    // nothing to clean up
+    return
+  }
+
   // there is a good chance this happens outside of a test, where the user
   // has no control over enabling or disabling the React Act environment,
   // so we do it for them here.
@@ -218,13 +223,13 @@ export function cleanup() {
     adjustTestingLibConfig: false,
   } satisfies /* ensure that all possible options are passed here in case we add more in the future */ Required<DisableActEnvironmentOptions>)
   try {
-    mountedRootEntries.forEach(({root, container}) => {
+    for (const {root, container} of mountedRootEntries) {
       root.unmount()
 
       if (container.parentNode === document.body) {
         document.body.removeChild(container)
       }
-    })
+    }
     mountedRootEntries.length = 0
     mountedContainers.clear()
   } finally {
