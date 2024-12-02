@@ -24,6 +24,7 @@ export {
   cleanup,
   type RenderWithoutActAsync,
 } from './renderWithoutAct.js'
-export {userEventWithoutAct} from './useWithoutAct.js'
-export {disableActEnvironment} from './disableActEnvironment.js'
-export {withDisabledActEnvironment} from './withDisabledActEnvironment.js'
+export {
+  disableActEnvironment,
+  type DisableActEnvironmentOptions,
+} from './disableActEnvironment.js'

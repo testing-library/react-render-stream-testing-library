@@ -11,7 +11,10 @@ import {
 } from '@testing-library/dom'
 import React from 'react'
 import {SyncQueries} from './renderStream/syncQueries.js'
-import {withDisabledActEnvironment} from './withDisabledActEnvironment.js'
+import {
+  disableActEnvironment,
+  DisableActEnvironmentOptions,
+} from './disableActEnvironment.js'
 
 // Ideally we'd just use a WeakMap where containers are keys and roots are values.
 // We use two variables so that we can bail out in constant time when we render with a new container (most common use case)
@@ -209,7 +212,12 @@ export function cleanup() {
   // there is a good chance this happens outside of a test, where the user
   // has no control over enabling or disabling the React Act environment,
   // so we do it for them here.
-  withDisabledActEnvironment(() => {
+
+  const disabledAct = disableActEnvironment({
+    preventModification: false,
+    adjustTestingLibConfig: false,
+  } satisfies /* ensure that all possible options are passed here in case we add more in the future */ Required<DisableActEnvironmentOptions>)
+  try {
     mountedRootEntries.forEach(({root, container}) => {
       root.unmount()
 
@@ -219,5 +227,7 @@ export function cleanup() {
     })
     mountedRootEntries.length = 0
     mountedContainers.clear()
-  })
+  } finally {
+    disabledAct.cleanup()
+  }
 }

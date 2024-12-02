@@ -1,15 +1,10 @@
 /* eslint-disable @typescript-eslint/no-use-before-define */
 import {jest, describe, test, expect} from '@jest/globals'
-import {
-  createRenderStream,
-  userEventWithoutAct,
-} from '@testing-library/react-render-stream'
-import {userEvent as baseUserEvent} from '@testing-library/user-event'
+import {createRenderStream} from '@testing-library/react-render-stream'
 import * as React from 'react'
 import {ErrorBoundary} from 'react-error-boundary'
+import {userEvent} from '@testing-library/user-event'
 import {getExpectErrorMessage} from '../../__testHelpers__/getCleanedErrorMessage.js'
-
-const userEvent = userEventWithoutAct(baseUserEvent)
 
 function CounterForm({
   value,

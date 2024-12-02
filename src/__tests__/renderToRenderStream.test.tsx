@@ -1,13 +1,8 @@
 /* eslint-disable @typescript-eslint/no-use-before-define */
 import {describe, test, expect} from '@jest/globals'
-import {
-  renderToRenderStream,
-  userEventWithoutAct,
-} from '@testing-library/react-render-stream'
-import {userEvent as baseUserEvent} from '@testing-library/user-event'
+import {renderToRenderStream} from '@testing-library/react-render-stream'
+import {userEvent} from '@testing-library/user-event'
 import * as React from 'react'
-
-const userEvent = userEventWithoutAct(baseUserEvent)
 
 function CounterForm({
   value,
