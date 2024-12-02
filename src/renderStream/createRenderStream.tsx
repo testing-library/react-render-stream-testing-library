@@ -267,10 +267,15 @@ export function createRenderStream<
     }
     const origRerender = ret.rerender
     ret.rerender = async function rerender(rerenderUi: React.ReactNode) {
+      const previousRenderCount = stream.renders.length
       try {
         return await origRerender(rerenderUi)
       } finally {
-        await stream.waitForNextRender()
+        // only wait for the next render if the rerender was not
+        // synchronous (React 17)
+        if (previousRenderCount === stream.renders.length) {
+          await stream.waitForNextRender()
+        }
       }
     }
     return ret
