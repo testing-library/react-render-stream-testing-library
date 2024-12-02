@@ -1,7 +1,4 @@
-import {
-  type RenderOptions as BaseOptions,
-  type RenderResult as BaseResult,
-} from '@testing-library/react/pure.js'
+import {type RenderOptions as BaseOptions} from '@testing-library/react/pure.js'
 import {type Queries} from '@testing-library/dom'
 import {
   createRenderStream,
