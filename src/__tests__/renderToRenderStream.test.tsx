@@ -33,13 +33,9 @@ describe('snapshotDOM', () => {
       )
     }
 
-    const {takeRender, renderResultPromise} = renderToRenderStream(
-      <Counter />,
-      {
-        snapshotDOM: true,
-      },
-    )
-    const utils = await renderResultPromise
+    const {takeRender, utils} = await renderToRenderStream(<Counter />, {
+      snapshotDOM: true,
+    })
     const incrementButton = utils.getByText('Increment')
     await userEvent.click(incrementButton)
     await userEvent.click(incrementButton)
@@ -69,14 +65,10 @@ describe('snapshotDOM', () => {
         return null
       },
     }
-    const {takeRender, renderResultPromise} = renderToRenderStream(
-      <Component />,
-      {
-        queries,
-        snapshotDOM: true,
-      },
-    )
-    const utils = await renderResultPromise
+    const {takeRender, utils} = await renderToRenderStream(<Component />, {
+      queries,
+      snapshotDOM: true,
+    })
     expect(utils.foo()).toBe(null)
     const {withinDOM} = await takeRender()
     expect(withinDOM().foo()).toBe(null)

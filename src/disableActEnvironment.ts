@@ -56,10 +56,13 @@ export interface DisableActEnvironmentOptions {
  * test("my test", () => {
  *   const { cleanup } = disableActEnvironment();
  *
- *   // your test code here
- *
- *   cleanup();
+ *   try {
+ *     // your test code here
+ *   } finally {
+ *     cleanup();
+ *   }
  * })
+ * ```
  *
  * For more context on what `act` is and why you shouldn't use it in renderStream tests,
  * https://github.com/reactwg/react-18/discussions/102 is probably the best resource we have.
