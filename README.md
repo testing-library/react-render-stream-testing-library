@@ -2,9 +2,9 @@
 
 ## What is this library?
 
-This library allows you to make render-per-render assertions on your React
-components and hooks. This is usually not necessary, but can be highly
-beneficial when testing hot code paths.
+This library allows you to make committed-render-to-committed-render assertions
+on your React components and hooks. This is usually not necessary, but can be
+highly beneficial when testing hot code paths.
 
 ## Who is this library for?
 
@@ -36,7 +36,7 @@ test('iterate through renders with DOM snapshots', async () => {
   const {takeRender, render} = createRenderStream({
     snapshotDOM: true,
   })
-  const utils = render(<Counter />)
+  const utils = await render(<Counter />)
   const incrementButton = utils.getByText('Increment')
   await userEvent.click(incrementButton)
   await userEvent.click(incrementButton)
@@ -63,22 +63,18 @@ test('iterate through renders with DOM snapshots', async () => {
 In every place you would call
 
 ```js
-const renderStream = createRenderStream(options)
-const utils = renderStream.render(<Component />, options)
+const {takeRender, render} = createRenderStream(options)
+const utils = await render(<Component />, options)
 ```
 
 you can also call
 
 ```js
-const renderStream = renderToRenderStream(<Component />, combinedOptions)
-// if required
-const utils = await renderStream.renderResultPromise
+const {takeRender, utils} = await renderToRenderStream(
+  <Component />,
+  combinedOptions,
+)
 ```
-
-This might be shorter (especially in cases where you don't need to access
-`utils`), but keep in mind that the render is executed **asynchronously** after
-calling `renderToRenderStream`, and that you need to `await renderResultPromise`
-if you need access to `utils` as returned by `render`.
 
 ### `renderHookToSnapshotStream`
 
@@ -87,7 +83,7 @@ object back that you can iterate with `takeSnapshot` calls.
 
 ```jsx
 test('`useQuery` with `skip`', async () => {
-  const {takeSnapshot, rerender} = renderHookToSnapshotStream(
+  const {takeSnapshot, rerender} = await renderHookToSnapshotStream(
     ({skip}) => useQuery(query, {skip}),
     {
       wrapper: ({children}) => <Provider client={client}>{children}</Provider>,
@@ -105,7 +101,7 @@ test('`useQuery` with `skip`', async () => {
     expect(result.data).toEqual({hello: 'world 1'})
   }
 
-  rerender({skip: true})
+  await rerender({skip: true})
   {
     const snapshot = await takeSnapshot()
     expect(snapshot.loading).toBe(false)
@@ -146,7 +142,7 @@ test('`useTrackRenders` with suspense', async () => {
   }
 
   const {takeRender, render} = createRenderStream()
-  render(<App />)
+  await render(<App />)
   {
     const {renderedComponents} = await takeRender()
     expect(renderedComponents).toEqual([App, LoadingComponent])
@@ -179,7 +175,7 @@ test('custom snapshots with `replaceSnapshot`', async () => {
   const {takeRender, replaceSnapshot, render} = createRenderStream<{
     value: number
   }>()
-  const utils = render(<Counter />)
+  const utils = await render(<Counter />)
   const incrementButton = utils.getByText('Increment')
   await userEvent.click(incrementButton)
   {
@@ -215,16 +211,14 @@ test('assertions in `onRender`', async () => {
     )
   }
 
-  const {takeRender, replaceSnapshot, renderResultPromise} =
-    renderToRenderStream<{
-      value: number
-    }>({
-      onRender(info) {
-        // you can use `expect` here
-        expect(info.count).toBe(info.snapshot.value + 1)
-      },
-    })
-  const utils = await renderResultPromise
+  const {takeRender, replaceSnapshot, utils} = await renderToRenderStream<{
+    value: number
+  }>({
+    onRender(info) {
+      // you can use `expect` here
+      expect(info.count).toBe(info.snapshot.value + 1)
+    },
+  })
   const incrementButton = utils.getByText('Increment')
   await userEvent.click(incrementButton)
   await userEvent.click(incrementButton)
@@ -247,7 +241,7 @@ This library adds to matchers to `expect` that can be used like
 
 ```tsx
 test('basic functionality', async () => {
-  const {takeRender} = renderToRenderStream(<RerenderingComponent />)
+  const {takeRender} = await renderToRenderStream(<RerenderingComponent />)
 
   await expect(takeRender).toRerender()
   await takeRender()
@@ -285,17 +279,45 @@ await expect(snapshotStream).toRerender()
 > [!TIP]
 >
 > If you don't want these matchers not to be automatically installed, you can
-> import from `@testing-library/react-render-stream` instead.
+> import from `@testing-library/react-render-stream/pure` instead.  
+> Keep in mind that if you use the `/pure` import, you have to call the
+> `cleanup` export manually after each test.
 
-## A note on `act`.
+## Usage side-by side with `@testing-library/react` or other tools that set `IS_REACT_ACT_ENVIRONMENT` or use `act`
 
-You might want to avoid using this library with `act`, as `act`
-[can end up batching multiple renders](https://github.com/facebook/react/issues/30031#issuecomment-2183951296)
-into one in a way that would not happen in a production application.
+This library is written in a way if should not be used with `act`, and it will
+throw an error if `IS_REACT_ACT_ENVIRONMENT` is `true`.
 
-While that is convenient in a normal test suite, it defeats the purpose of this
-library.
+React Testing Library usually sets `IS_REACT_ACT_ENVIRONMENT` to `true`
+globally, and wraps some helpers like `userEvent.click` in `act` calls.
 
-Keep in mind that tools like `userEvent.click` use `act` internally. Many of
-those calls would only trigger one render anyways, so it can be okay to use
-them, but avoid this for longer-running actions inside of `act` calls.
+To use this library side-by-side with React Testing Library, we ship the
+`disableActEnvironment` helper to undo these changes temporarily.
+
+It returns a `Disposable` and can be used together with the `using` keyword to
+automatically clean up once the scope is left:
+
+```ts
+test('my test', () => {
+  using _disabledAct = disableActEnvironment()
+
+  // your test code here
+
+  // as soon as this scope is left, the environment will be cleaned up
+})
+```
+
+If you cannot use `using`, you can also manually call the returned `cleanup`
+function:
+
+```ts
+test('my test', () => {
+  const {cleanup} = disableActEnvironment()
+
+  try {
+    // your test code here
+  } finally {
+    cleanup()
+  }
+})
+```
