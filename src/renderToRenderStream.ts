@@ -10,6 +10,7 @@ import {
   type ValidSnapshot,
 } from './renderStream/createRenderStream.js'
 import {SyncQueries} from './renderStream/syncQueries.js'
+import {AsyncRenderResult} from './renderWithoutAct.js'
 
 type RenderOptions<
   Snapshot extends ValidSnapshot = void,
@@ -20,7 +21,7 @@ export interface RenderStreamWithRenderResult<
   Snapshot extends ValidSnapshot = void,
   Q extends Queries = SyncQueries,
 > extends RenderStream<Snapshot, Q> {
-  utils: BaseResult<Q>
+  utils: AsyncRenderResult<Q>
 }
 
 /**

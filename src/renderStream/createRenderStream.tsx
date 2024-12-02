@@ -251,7 +251,7 @@ export function createRenderStream<
     ui: React.ReactNode,
     options?: RenderOptions<any, any, any>,
   ) => {
-    const ret = renderWithoutAct(ui, {
+    const ret = await renderWithoutAct(ui, {
       ...options,
       wrapper: props => {
         const ParentWrapper = options?.wrapper ?? React.Fragment
@@ -264,6 +264,14 @@ export function createRenderStream<
     })
     if (stream.renders.length === 0) {
       await stream.waitForNextRender()
+    }
+    const origRerender = ret.rerender
+    ret.rerender = async function rerender(rerenderUi: React.ReactNode) {
+      try {
+        return await origRerender(rerenderUi)
+      } finally {
+        await stream.waitForNextRender()
+      }
     }
     return ret
   }) as unknown as RenderWithoutActAsync // TODO

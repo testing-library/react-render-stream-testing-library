@@ -1,12 +1,11 @@
 import * as ReactDOMClient from 'react-dom/client'
 import * as ReactDOM from 'react-dom'
+import {type RenderOptions} from '@testing-library/react/pure.js'
 import {
-  type RenderOptions,
-  type RenderResult,
-} from '@testing-library/react/pure.js'
-import {
+  BoundFunction,
   getQueriesForElement,
   prettyDOM,
+  prettyFormat,
   type Queries,
 } from '@testing-library/dom'
 import React from 'react'
@@ -25,6 +24,26 @@ const mountedRootEntries: Array<{
   root: ReturnType<typeof createConcurrentRoot>
 }> = []
 
+export type AsyncRenderResult<
+  Q extends Queries = SyncQueries,
+  Container extends ReactDOMClient.Container = HTMLElement,
+  BaseElement extends ReactDOMClient.Container = Container,
+> = {
+  container: Container
+  baseElement: BaseElement
+  debug: (
+    baseElement?:
+      | ReactDOMClient.Container
+      | Array<ReactDOMClient.Container>
+      | undefined,
+    maxLength?: number | undefined,
+    options?: prettyFormat.OptionsReceived | undefined,
+  ) => void
+  rerender: (rerenderUi: React.ReactNode) => Promise<void>
+  unmount: () => void
+  asFragment: () => DocumentFragment
+} & {[P in keyof Q]: BoundFunction<Q[P]>}
+
 function renderRoot(
   ui: React.ReactNode,
   {
@@ -38,7 +57,7 @@ function renderRoot(
     container: ReactDOMClient.Container
     root: ReturnType<typeof createConcurrentRoot>
   },
-): RenderResult<Queries, any, any> {
+): AsyncRenderResult<{}, any, any> {
   root.render(
     WrapperComponent ? React.createElement(WrapperComponent, null, ui) : ui,
   )
@@ -57,7 +76,7 @@ function renderRoot(
     unmount: () => {
       root.unmount()
     },
-    rerender: rerenderUi => {
+    rerender: async rerenderUi => {
       renderRoot(rerenderUi, {
         container,
         baseElement,
@@ -80,7 +99,7 @@ function renderRoot(
       }
     },
     ...getQueriesForElement<Queries>(baseElement as HTMLElement, queries),
-  } as RenderResult<Queries, any, any> // TODO clean up more
+  }
 }
 
 export type RenderWithoutActAsync = {
@@ -91,18 +110,19 @@ export type RenderWithoutActAsync = {
   >(
     this: any,
     ui: React.ReactNode,
-    options: //Omit<
-    RenderOptions<Q, Container, BaseElement>,
-    //'hydrate' | 'legacyRoot'  >,
-  ): Promise<RenderResult<Q, Container, BaseElement>>
+    options: Pick<
+      RenderOptions<Q, Container, BaseElement>,
+      'container' | 'baseElement' | 'queries' | 'wrapper'
+    >,
+  ): Promise<AsyncRenderResult<Q, Container, BaseElement>>
   (
     this: any,
     ui: React.ReactNode,
     options?:
-      | Omit<RenderOptions, 'hydrate' | 'legacyRoot' | 'queries'>
+      | Pick<RenderOptions, 'container' | 'baseElement' | 'wrapper'>
       | undefined,
   ): Promise<
-    RenderResult<
+    AsyncRenderResult<
       SyncQueries,
       ReactDOMClient.Container,
       ReactDOMClient.Container
@@ -110,35 +130,21 @@ export type RenderWithoutActAsync = {
   >
 }
 
-export function renderWithoutAct<
-  Q extends Queries = SyncQueries,
-  Container extends ReactDOMClient.Container = HTMLElement,
-  BaseElement extends ReactDOMClient.Container = Container,
->(
-  ui: React.ReactNode,
-  options: //Omit<
-  RenderOptions<Q, Container, BaseElement>,
-  //'hydrate' | 'legacyRoot'  >,
-): RenderResult<Q, Container, BaseElement>
-export function renderWithoutAct(
-  ui: React.ReactNode,
-  options?:
-    | Omit<RenderOptions, 'hydrate' | 'legacyRoot' | 'queries'>
-    | undefined,
-): RenderResult<Queries, ReactDOMClient.Container, ReactDOMClient.Container>
+export const renderWithoutAct =
+  _renderWithoutAct as unknown as RenderWithoutActAsync
 
-export function renderWithoutAct(
+async function _renderWithoutAct(
   ui: React.ReactNode,
   {
     container,
     baseElement = container,
     queries,
     wrapper,
-  }: Omit<
-    RenderOptions<Queries, ReactDOMClient.Container, ReactDOMClient.Container>,
-    'hydrate' | 'legacyRoot'
+  }: Pick<
+    RenderOptions<SyncQueries>,
+    'container' | 'baseElement' | 'wrapper' | 'queries'
   > = {},
-): RenderResult<any, ReactDOMClient.Container, ReactDOMClient.Container> {
+): Promise<AsyncRenderResult<{}>> {
   if (!baseElement) {
     // default to document.body instead of documentElement to avoid output of potentially-large
     // head elements (such as JSS style blocks) in debug output
@@ -172,7 +178,13 @@ export function renderWithoutAct(
     })
   }
 
-  return renderRoot(ui, {baseElement, container, queries, wrapper, root: root!})
+  return renderRoot(ui, {
+    baseElement,
+    container,
+    queries,
+    wrapper,
+    root: root!,
+  })
 }
 
 function createLegacyRoot(container: ReactDOMClient.Container) {

@@ -267,4 +267,18 @@ Expected: 1
 Received: 2
 `)
   })
+
+  test('returned `rerender` returns a promise that resolves', async () => {
+    function Component() {
+      return null
+    }
+
+    const {takeRender, render} = createRenderStream()
+    const {rerender} = await render(<Component />)
+    await takeRender()
+    const promise: Promise<void> = rerender(<Component />)
+    expect(promise).toBeInstanceOf(Promise)
+    await promise
+    await takeRender()
+  })
 })
