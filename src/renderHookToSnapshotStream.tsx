@@ -41,7 +41,7 @@ export interface SnapshotStream<Snapshot, Props> extends Assertable {
    * Does not advance the render iterator.
    */
   waitForNextSnapshot(options?: NextRenderOptions): Promise<Snapshot>
-  rerender: (rerenderCallbackProps: Props) => void
+  rerender: (rerenderCallbackProps: Props) => Promise<void>
   unmount: () => void
 }
 
