@@ -70,11 +70,15 @@ const utils = await render(<Component />, options)
 you can also call
 
 ```js
-const {takeRender, utils} = await renderToRenderStream(
-  <Component />,
-  combinedOptions,
-)
+const renderStream = renderToRenderStream(<Component />, combinedOptions)
+// if required
+const utils = await renderStream.renderResultPromise
 ```
+
+This might be shorter (especially in cases where you don't need to access
+`utils`), but keep in mind that the render is executed **asynchronously** after
+calling `renderToRenderStream`, and that you need to `await renderResultPromise`
+if you need access to `utils` as returned by `render`.
 
 ### `renderHookToSnapshotStream`
 

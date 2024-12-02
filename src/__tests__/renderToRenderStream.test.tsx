@@ -3,7 +3,6 @@ import {describe, test, expect} from '@jest/globals'
 import {renderToRenderStream} from '@testing-library/react-render-stream'
 import {userEvent} from '@testing-library/user-event'
 import * as React from 'react'
-
 function CounterForm({
   value,
   onIncrement,
@@ -33,9 +32,13 @@ describe('snapshotDOM', () => {
       )
     }
 
-    const {takeRender, utils} = await renderToRenderStream(<Counter />, {
-      snapshotDOM: true,
-    })
+    const {takeRender, renderResultPromise} = renderToRenderStream(
+      <Counter />,
+      {
+        snapshotDOM: true,
+      },
+    )
+    const utils = await renderResultPromise
     const incrementButton = utils.getByText('Increment')
     await userEvent.click(incrementButton)
     await userEvent.click(incrementButton)
@@ -65,10 +68,14 @@ describe('snapshotDOM', () => {
         return null
       },
     }
-    const {takeRender, utils} = await renderToRenderStream(<Component />, {
-      queries,
-      snapshotDOM: true,
-    })
+    const {takeRender, renderResultPromise} = renderToRenderStream(
+      <Component />,
+      {
+        queries,
+        snapshotDOM: true,
+      },
+    )
+    const utils = await renderResultPromise
     expect(utils.foo()).toBe(null)
     const {withinDOM} = await takeRender()
     expect(withinDOM().foo()).toBe(null)

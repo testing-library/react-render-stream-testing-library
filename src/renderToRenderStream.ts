@@ -18,13 +18,13 @@ export interface RenderStreamWithRenderResult<
   Snapshot extends ValidSnapshot = void,
   Q extends Queries = SyncQueries,
 > extends RenderStream<Snapshot, Q> {
-  utils: AsyncRenderResult<Q>
+  renderResultPromise: Promise<AsyncRenderResult<Q>>
 }
 
 /**
  * Render into a container which is appended to document.body. It should be used with cleanup.
  */
-export async function renderToRenderStream<
+export function renderToRenderStream<
   Snapshot extends ValidSnapshot = void,
   Q extends Queries = SyncQueries,
 >(
@@ -37,7 +37,7 @@ export async function renderToRenderStream<
     queries,
     ...options
   }: RenderOptions<Snapshot, Q> = {},
-): Promise<RenderStreamWithRenderResult<Snapshot, Q>> {
+): RenderStreamWithRenderResult<Snapshot, Q> {
   const {render, ...stream} = createRenderStream<Snapshot, Q>({
     onRender,
     snapshotDOM,
@@ -45,12 +45,11 @@ export async function renderToRenderStream<
     skipNonTrackingRenders,
     queries,
   })
-
-  // We need to wait a tick before calling `render` here, because the definition of `ui`
+  // `render` needs to be called asynchronously here, because the definition of `ui`
   // might contain components that reference the return value of `renderToRenderStream`
   // itself, e.g. `replaceSnapshot` or `mergeSnapshot`.
-  await Promise.resolve()
-  const utils = await render<Q>(ui, {...options, queries})
-
-  return {...stream, utils}
+  const renderResultPromise = Promise.resolve().then(() =>
+    render<Q>(ui, {...options, queries}),
+  )
+  return {...stream, renderResultPromise}
 }
