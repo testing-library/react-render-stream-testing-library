@@ -79,6 +79,8 @@ export function disableActEnvironment({
     cleanupFns.push(() => {
       Object.defineProperty(typedGlobal, 'IS_REACT_ACT_ENVIRONMENT', {
         value: previous,
+        writable: true,
+        configurable: true,
       })
     })
     Object.defineProperty(
@@ -93,8 +95,16 @@ export function disableActEnvironment({
     // eslint-disable-next-line @typescript-eslint/unbound-method
     const {asyncWrapper, eventWrapper} = config
     cleanupFns.push(() => {
-      Object.defineProperty(config, 'asyncWrapper', {value: asyncWrapper})
-      Object.defineProperty(config, 'eventWrapper', {value: eventWrapper})
+      Object.defineProperty(config, 'asyncWrapper', {
+        value: asyncWrapper,
+        writable: true,
+        configurable: true,
+      })
+      Object.defineProperty(config, 'eventWrapper', {
+        value: eventWrapper,
+        writable: true,
+        configurable: true,
+      })
     })
 
     Object.defineProperty(
