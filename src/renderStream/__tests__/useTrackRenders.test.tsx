@@ -17,6 +17,9 @@ describe('non-suspense use cases', () => {
   let asyncAction = Promise.withResolvers<string>()
   beforeEach(() => {
     asyncAction = Promise.withResolvers<string>()
+    void asyncAction.promise.catch(() => {
+      /* avoid uncaught promise rejection */
+    })
   })
   function ErrorComponent() {
     useTrackRenders()
