@@ -58,28 +58,6 @@ test('iterate through renders with DOM snapshots', async () => {
 })
 ```
 
-### `renderToRenderStream` as a shortcut for `createRenderStream` and calling `render`
-
-In every place you would call
-
-```js
-const {takeRender, render} = createRenderStream(options)
-const utils = await render(<Component />, options)
-```
-
-you can also call
-
-```js
-const renderStream = renderToRenderStream(<Component />, combinedOptions)
-// if required
-const utils = await renderStream.renderResultPromise
-```
-
-This might be shorter (especially in cases where you don't need to access
-`utils`), but keep in mind that the render is executed **asynchronously** after
-calling `renderToRenderStream`, and that you need to `await renderResultPromise`
-if you need access to `utils` as returned by `render`.
-
 ### `renderHookToSnapshotStream`
 
 Usage is very similar to RTL's `renderHook`, but you get a `snapshotStream`
