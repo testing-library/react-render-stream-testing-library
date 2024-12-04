@@ -1,11 +1,14 @@
 import * as React from 'rehackt'
 
-import {render as baseRender, RenderOptions} from '@testing-library/react'
+import {type RenderOptions} from '@testing-library/react/pure.js'
 import {Assertable, markAssertable} from '../assertable.js'
+import {
+  renderWithoutAct,
+  type RenderWithoutActAsync,
+} from '../renderWithoutAct.js'
 import {RenderInstance, type Render, type BaseRender} from './Render.js'
 import {type RenderStreamContextValue} from './context.js'
 import {RenderStreamContextProvider} from './context.js'
-import {disableActWarnings} from './disableActWarnings.js'
 import {syncQueries, type Queries, type SyncQueries} from './syncQueries.js'
 
 export type ValidSnapshot =
@@ -81,7 +84,7 @@ export interface RenderStreamWithRenderFn<
   Snapshot extends ValidSnapshot,
   Q extends Queries = SyncQueries,
 > extends RenderStream<Snapshot, Q> {
-  render: typeof baseRender
+  render: RenderWithoutActAsync
 }
 
 export type RenderStreamOptions<
@@ -247,11 +250,11 @@ export function createRenderStream<
     )
   }
 
-  const render = ((
+  const render: RenderWithoutActAsync = (async (
     ui: React.ReactNode,
     options?: RenderOptions<any, any, any>,
   ) => {
-    return baseRender(ui, {
+    const ret = await renderWithoutAct(ui, {
       ...options,
       wrapper: props => {
         const ParentWrapper = options?.wrapper ?? React.Fragment
@@ -262,7 +265,24 @@ export function createRenderStream<
         )
       },
     })
-  }) as typeof baseRender
+    if (stream.renders.length === 0) {
+      await stream.waitForNextRender()
+    }
+    const origRerender = ret.rerender
+    ret.rerender = async function rerender(rerenderUi: React.ReactNode) {
+      const previousRenderCount = stream.renders.length
+      try {
+        return await origRerender(rerenderUi)
+      } finally {
+        // only wait for the next render if the rerender was not
+        // synchronous (React 17)
+        if (previousRenderCount === stream.renders.length) {
+          await stream.waitForNextRender()
+        }
+      }
+    }
+    return ret
+  }) as unknown as RenderWithoutActAsync // TODO
 
   Object.assign<typeof stream, typeof stream>(stream, {
     replaceSnapshot,
@@ -275,27 +295,31 @@ export function createRenderStream<
       return stream.renders.length
     },
     async peekRender(options: NextRenderOptions = {}) {
-      if (iteratorPosition < stream.renders.length) {
-        const peekedRender = stream.renders[iteratorPosition]
+      try {
+        if (iteratorPosition < stream.renders.length) {
+          const peekedRender = stream.renders[iteratorPosition]
 
-        if (peekedRender.phase === 'snapshotError') {
-          throw peekedRender.error
+          if (peekedRender.phase === 'snapshotError') {
+            throw peekedRender.error
+          }
+
+          return peekedRender
         }
-
-        return peekedRender
+        return await stream
+          .waitForNextRender(options)
+          .catch(rethrowWithCapturedStackTrace(stream.peekRender))
+      } finally {
+        /** drain microtask queue */
+        await new Promise<void>(resolve => {
+          setTimeout(() => {
+            resolve()
+          }, 0)
+        })
       }
-      return stream
-        .waitForNextRender(options)
-        .catch(rethrowWithCapturedStackTrace(stream.peekRender))
     },
     takeRender: markAssertable(async function takeRender(
       options: NextRenderOptions = {},
     ) {
-      // In many cases we do not control the resolution of the suspended
-      // promise which results in noisy tests when the profiler due to
-      // repeated act warnings.
-      const disabledActWarnings = disableActWarnings()
-
       let error: unknown
 
       try {
@@ -312,7 +336,6 @@ export function createRenderStream<
         if (!(error && error instanceof WaitForRenderTimeoutError)) {
           iteratorPosition++
         }
-        disabledActWarnings.cleanup()
       }
     }, stream),
     getCurrentRender() {
