@@ -265,12 +265,12 @@ await expect(snapshotStream).toRerender()
 > Keep in mind that if you use the `/pure` import, you have to call the
 > `cleanup` export manually after each test.
 
-## Usage side-by side with `@testing-library/react` or other tools that set `IS_REACT_ACT_ENVIRONMENT` or use `act`
+## Usage side-by side with `@testing-library/react` or other tools that use `act` or set `IS_REACT_ACT_ENVIRONMENT`
 
-This library is written in a way if should not be used with `act`, and it will
+This library should not be used with `act`, and it will throw an error if `IS_REACT_ACT_ENVIRONMENT` is `true`
 throw an error if `IS_REACT_ACT_ENVIRONMENT` is `true`.
 
-React Testing Library usually sets `IS_REACT_ACT_ENVIRONMENT` to `true`
+React Testing Library sets `IS_REACT_ACT_ENVIRONMENT` to `true`
 globally, and wraps some helpers like `userEvent.click` in `act` calls.
 
 To use this library side-by-side with React Testing Library, we ship the
