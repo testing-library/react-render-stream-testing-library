@@ -267,17 +267,17 @@ await expect(snapshotStream).toRerender()
 
 ## Usage side-by side with `@testing-library/react` or other tools that use `act` or set `IS_REACT_ACT_ENVIRONMENT`
 
-This library should not be used with `act`, and it will throw an error if `IS_REACT_ACT_ENVIRONMENT` is `true`
-throw an error if `IS_REACT_ACT_ENVIRONMENT` is `true`.
+This library should not be used with `act`, and it will throw an error if
+`IS_REACT_ACT_ENVIRONMENT` is `true`.
 
-React Testing Library sets `IS_REACT_ACT_ENVIRONMENT` to `true`
-globally, and wraps some helpers like `userEvent.click` in `act` calls.
-
+React Testing Library sets `IS_REACT_ACT_ENVIRONMENT` to `true` globally, and
+wraps some helpers like `userEvent.click` in `act` calls.  
 To use this library side-by-side with React Testing Library, we ship the
 `disableActEnvironment` helper to undo these changes temporarily.
 
-It returns a `Disposable` and can be used together with the `using` keyword to
-automatically clean up once the scope is left:
+It returns a `Disposable` and can be used together with the
+[`using` keyword](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-5-2.html#using-declarations-and-explicit-resource-management)
+to automatically clean up once the scope is left:
 
 ```ts
 test('my test', () => {
@@ -290,7 +290,8 @@ test('my test', () => {
 ```
 
 If you cannot use `using`, you can also manually call the returned `cleanup`
-function:
+function. We recommend using `finally` to ensure the act environment is cleaned
+up if your test fails, otherwise it could leak between tests:
 
 ```ts
 test('my test', () => {
