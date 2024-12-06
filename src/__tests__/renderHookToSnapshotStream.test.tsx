@@ -1,10 +1,10 @@
 /* eslint-disable no-await-in-loop */
 /* eslint-disable @typescript-eslint/no-unnecessary-condition */
 import {EventEmitter} from 'node:events'
+import {scheduler} from 'node:timers/promises'
 import {test, expect} from '@jest/globals'
 import {renderHookToSnapshotStream} from '@testing-library/react-render-stream'
 import * as React from 'react'
-import {withDisabledActWarnings} from '../__testHelpers__/withDisabledActWarnings.js'
 
 const testEvents = new EventEmitter<{
   rerenderWithValue: [unknown]
@@ -16,7 +16,7 @@ function useRerenderEvents(initialValue: unknown) {
     onChange => {
       const cb = (value: unknown) => {
         lastValueRef.current = value
-        withDisabledActWarnings(onChange)
+        onChange()
       }
       testEvents.addListener('rerenderWithValue', cb)
       return () => {
@@ -30,11 +30,11 @@ function useRerenderEvents(initialValue: unknown) {
 }
 
 test('basic functionality', async () => {
-  const {takeSnapshot} = renderHookToSnapshotStream(useRerenderEvents, {
+  const {takeSnapshot} = await renderHookToSnapshotStream(useRerenderEvents, {
     initialProps: 'initial',
   })
   testEvents.emit('rerenderWithValue', 'value')
-  await Promise.resolve()
+  await scheduler.wait(10)
   testEvents.emit('rerenderWithValue', 'value2')
   {
     const snapshot = await takeSnapshot()
@@ -59,7 +59,7 @@ test.each<[type: string, initialValue: unknown, ...nextValues: unknown[]]>([
   ['null/undefined', null, undefined, null],
   ['undefined/null', undefined, null, undefined],
 ])('works with %s', async (_, initialValue, ...nextValues) => {
-  const {takeSnapshot} = renderHookToSnapshotStream(useRerenderEvents, {
+  const {takeSnapshot} = await renderHookToSnapshotStream(useRerenderEvents, {
     initialProps: initialValue,
   })
   for (const nextValue of nextValues) {

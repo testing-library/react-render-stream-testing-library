@@ -1,9 +1,9 @@
 /* eslint-disable @typescript-eslint/no-use-before-define */
 import {jest, describe, test, expect} from '@jest/globals'
 import {createRenderStream} from '@testing-library/react-render-stream'
-import {userEvent} from '@testing-library/user-event'
 import * as React from 'react'
 import {ErrorBoundary} from 'react-error-boundary'
+import {userEvent} from '@testing-library/user-event'
 import {getExpectErrorMessage} from '../../__testHelpers__/getCleanedErrorMessage.js'
 
 function CounterForm({
@@ -38,7 +38,7 @@ describe('snapshotDOM', () => {
     const {takeRender, render} = createRenderStream({
       snapshotDOM: true,
     })
-    const utils = render(<Counter />)
+    const utils = await render(<Counter />)
     const incrementButton = utils.getByText('Increment')
     await userEvent.click(incrementButton)
     await userEvent.click(incrementButton)
@@ -71,7 +71,7 @@ describe('snapshotDOM', () => {
     const {takeRender, render} = createRenderStream({
       snapshotDOM: true,
     })
-    render(<Counter />)
+    await render(<Counter />)
     {
       const {withinDOM} = await takeRender()
       const snapshotIncrementButton = withinDOM().getByText('Increment')
@@ -103,7 +103,7 @@ describe('snapshotDOM', () => {
       snapshotDOM: true,
       queries,
     })
-    render(<Component />)
+    await render(<Component />)
 
     const {withinDOM} = await takeRender()
     expect(withinDOM().foo()).toBe(null)
@@ -129,7 +129,7 @@ describe('replaceSnapshot', () => {
     const {takeRender, replaceSnapshot, render} = createRenderStream<{
       value: number
     }>()
-    const utils = render(<Counter />)
+    const utils = await render(<Counter />)
     const incrementButton = utils.getByText('Increment')
     await userEvent.click(incrementButton)
     await userEvent.click(incrementButton)
@@ -159,7 +159,7 @@ describe('replaceSnapshot', () => {
       const {takeRender, replaceSnapshot, render} = createRenderStream({
         initialSnapshot: {unrelatedValue: 'unrelated', value: -1},
       })
-      const utils = render(<Counter />)
+      const utils = await render(<Counter />)
       const incrementButton = utils.getByText('Increment')
       await userEvent.click(incrementButton)
       await userEvent.click(incrementButton)
@@ -192,7 +192,7 @@ describe('replaceSnapshot', () => {
 
       const spy = jest.spyOn(console, 'error')
       spy.mockImplementation(() => {})
-      render(
+      await render(
         <ErrorBoundary
           fallbackRender={({error}) => {
             // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
@@ -230,7 +230,7 @@ describe('onRender', () => {
         expect(info.count).toBe(info.snapshot.value + 1)
       },
     })
-    const utils = render(<Counter />)
+    const utils = await render(<Counter />)
     const incrementButton = utils.getByText('Increment')
     await userEvent.click(incrementButton)
     await userEvent.click(incrementButton)
@@ -253,7 +253,7 @@ describe('onRender', () => {
       },
     })
 
-    const utils = render(<Counter />)
+    const utils = await render(<Counter />)
     const incrementButton = utils.getByText('Increment')
     await userEvent.click(incrementButton)
     await userEvent.click(incrementButton)
@@ -266,5 +266,19 @@ expect(received).toBe(expected) // Object.is equality
 Expected: 1
 Received: 2
 `)
+  })
+
+  test('returned `rerender` returns a promise that resolves', async () => {
+    function Component() {
+      return null
+    }
+
+    const {takeRender, render} = createRenderStream()
+    const {rerender} = await render(<Component />)
+    await takeRender()
+    const promise: Promise<void> = rerender(<Component />)
+    expect(promise).toBeInstanceOf(Promise)
+    await promise
+    await takeRender()
   })
 })

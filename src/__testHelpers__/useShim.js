@@ -1,3 +1,5 @@
+import * as React from 'react'
+
 /* eslint-disable default-case */
 /* eslint-disable consistent-return */
 function isStatefulPromise(promise) {
@@ -33,7 +35,7 @@ function wrapPromiseWithState(promise) {
  * @param {Promise<T>} promise
  * @returns {T}
  */
-export function __use(promise) {
+function _use(promise) {
   const statefulPromise = wrapPromiseWithState(promise)
   switch (statefulPromise.status) {
     case 'pending':
@@ -44,3 +46,5 @@ export function __use(promise) {
       return statefulPromise.value
   }
 }
+
+export const __use = /** @type {{use?: typeof _use}} */ (React).use || _use
