@@ -41,7 +41,7 @@ export interface SnapshotStream<Snapshot, Props> extends Assertable {
    * Does not advance the render iterator.
    */
   waitForNextSnapshot(options?: NextRenderOptions): Promise<Snapshot>
-  rerender: (rerenderCallbackProps: Props) => Promise<void>
+  rerender: (rerenderCallbackProps?: Props) => Promise<void>
   unmount: () => void
 }
 
@@ -51,17 +51,17 @@ export async function renderHookToSnapshotStream<ReturnValue, Props>(
 ): Promise<SnapshotStream<ReturnValue, Props>> {
   const {render, ...stream} = createRenderStream<{value: ReturnValue}, never>()
 
-  const HookComponent: React.FC<{arg: Props}> = props => {
-    stream.replaceSnapshot({value: renderCallback(props.arg)})
+  const HookComponent: React.FC<{arg: Props | undefined}> = props => {
+    stream.replaceSnapshot({value: renderCallback(props.arg!)})
     return null
   }
 
   const {rerender: baseRerender, unmount} = await render(
-    <HookComponent arg={initialProps!} />,
+    <HookComponent arg={initialProps} />,
     renderOptions,
   )
 
-  function rerender(rerenderCallbackProps: Props) {
+  function rerender(rerenderCallbackProps?: Props) {
     return baseRerender(<HookComponent arg={rerenderCallbackProps} />)
   }
 
