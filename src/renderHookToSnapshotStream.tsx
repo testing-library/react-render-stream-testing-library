@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-invalid-void-type */
 import {type RenderHookOptions} from '@testing-library/react/pure.js'
 import React from 'rehackt'
 import {createRenderStream} from './renderStream/createRenderStream.js'
