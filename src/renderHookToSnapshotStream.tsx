@@ -41,9 +41,19 @@ export interface SnapshotStream<Snapshot, Props> extends Assertable {
    * Does not advance the render iterator.
    */
   waitForNextSnapshot(options?: NextRenderOptions): Promise<Snapshot>
-  rerender: (rerenderCallbackProps: Props) => Promise<void>
+  rerender: (rerenderCallbackProps: VoidOptionalArg<Props>) => Promise<void>
   unmount: () => void
 }
+
+/**
+ * if `Arg` can be `undefined`, replace it with `void` to make type represent an optional argument in a function argument position
+ */
+type VoidOptionalArg<Arg> = Arg extends any // distribute members of a potential `Props` union
+  ? undefined extends Arg
+    ? // eslint-disable-next-line @typescript-eslint/no-invalid-void-type
+      void
+    : Arg
+  : Arg
 
 export async function renderHookToSnapshotStream<ReturnValue, Props = void>(
   renderCallback: (props: Props) => ReturnValue,

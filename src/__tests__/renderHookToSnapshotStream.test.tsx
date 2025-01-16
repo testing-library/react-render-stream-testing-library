@@ -109,4 +109,14 @@ test.skip('type test: render function without an argument -> no argument require
     await stream.rerender()
     await stream.rerender('foo')
   }
+  {
+    // argument is optional
+    const stream = await renderHookToSnapshotStream((_arg1?: string) => {})
+
+    const _test1: SnapshotStream<void, void> = stream
+    const _test2: SnapshotStream<void, string> = stream
+    const _test3: SnapshotStream<void, string | undefined> = stream
+    await stream.rerender()
+    await stream.rerender('foo')
+  }
 })
