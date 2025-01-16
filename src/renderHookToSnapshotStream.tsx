@@ -71,8 +71,9 @@ export async function renderHookToSnapshotStream<ReturnValue, Props = void>(
     renderOptions,
   )
 
-  function rerender(rerenderCallbackProps: Props) {
-    return baseRerender(<HookComponent arg={rerenderCallbackProps} />)
+  function rerender(rerenderCallbackProps: VoidOptionalArg<Props>) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    return baseRerender(<HookComponent arg={rerenderCallbackProps as any} />)
   }
 
   return {
