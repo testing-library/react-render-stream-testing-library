@@ -3,7 +3,10 @@
 import {EventEmitter} from 'node:events'
 import {scheduler} from 'node:timers/promises'
 import {test, expect} from '@jest/globals'
-import {renderHookToSnapshotStream} from '@testing-library/react-render-stream'
+import {
+  renderHookToSnapshotStream,
+  SnapshotStream,
+} from '@testing-library/react-render-stream'
 import * as React from 'react'
 
 const testEvents = new EventEmitter<{
@@ -70,5 +73,50 @@ test.each<[type: string, initialValue: unknown, ...nextValues: unknown[]]>([
   expect(await takeSnapshot()).toBe(initialValue)
   for (const nextValue of nextValues) {
     expect(await takeSnapshot()).toBe(nextValue)
+  }
+})
+
+test.skip('type test: render function without an argument -> no argument required for `rerender`', async () => {
+  {
+    // prop type has nothing to infer on - defaults to `void`
+    const stream = await renderHookToSnapshotStream(() => {})
+    const _test1: SnapshotStream<void, void> = stream
+    // @ts-expect-error should not be assignable
+    const _test2: SnapshotStream<void, string> = stream
+    await stream.rerender()
+    // @ts-expect-error invalid argument
+    await stream.rerender('foo')
+  }
+  {
+    // prop type is implicitly set via the render function argument
+    const stream = await renderHookToSnapshotStream((_arg1: string) => {})
+    // @ts-expect-error should not be assignable
+    const _test1: SnapshotStream<void, void> = stream
+    const _test2: SnapshotStream<void, string> = stream
+    // @ts-expect-error missing argument
+    await stream.rerender()
+    await stream.rerender('foo')
+  }
+  {
+    // prop type is implicitly set via the initialProps argument
+    const stream = await renderHookToSnapshotStream(() => {}, {
+      initialProps: 'initial',
+    })
+    // @ts-expect-error should not be assignable
+    const _test1: SnapshotStream<void, void> = stream
+    const _test2: SnapshotStream<void, string> = stream
+    // @ts-expect-error missing argument
+    await stream.rerender()
+    await stream.rerender('foo')
+  }
+  {
+    // argument is optional
+    const stream = await renderHookToSnapshotStream((_arg1?: string) => {})
+
+    const _test1: SnapshotStream<void, void> = stream
+    const _test2: SnapshotStream<void, string> = stream
+    const _test3: SnapshotStream<void, string | undefined> = stream
+    await stream.rerender()
+    await stream.rerender('foo')
   }
 })
