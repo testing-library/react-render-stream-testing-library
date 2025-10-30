@@ -10,7 +10,7 @@ export {
 } from './renderStream/createRenderStream.js'
 export {useTrackRenders} from './renderStream/useTrackRenders.js'
 
-export type {SyncScreen} from './renderStream/Render.js'
+export type {Render, SyncScreen} from './renderStream/Render.js'
 
 export {renderHookToSnapshotStream} from './renderHookToSnapshotStream.js'
 export type {SnapshotStream} from './renderHookToSnapshotStream.js'
