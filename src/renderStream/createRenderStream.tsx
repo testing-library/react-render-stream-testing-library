@@ -136,7 +136,8 @@ export function createRenderStream<
 
   let nextRender: Promise<Render<Snapshot, Q>> | undefined,
     resolveNextRender: ((render: Render<Snapshot, Q>) => void) | undefined,
-    rejectNextRender: ((error: unknown) => void) | undefined
+    rejectNextRender: ((error: unknown) => void) | undefined,
+    resolveEffectsFlushed: (() => void) | undefined
   function resetNextRender() {
     nextRender = undefined
     resolveNextRender = undefined
@@ -240,7 +241,20 @@ export function createRenderStream<
   }
 
   let iteratorPosition = 0
+  /**
+   * Since React 19.1, effects can run in a later task than their commit.
+   * `Wrapper` only rerenders on `render` and `rerender`, and parent effects run
+   * after child effects, so this resolves once all effects of that commit ran.
+   */
+  function nextEffectsFlushed() {
+    return new Promise<void>(resolve => {
+      resolveEffectsFlushed = resolve
+    })
+  }
   function Wrapper({children}: {children: React.ReactNode}) {
+    React.useEffect(() => {
+      resolveEffectsFlushed?.()
+    })
     return (
       <RenderStreamContextProvider value={renderStreamContext}>
         <React.Profiler id="test" onRender={profilerOnRender}>
@@ -254,6 +268,7 @@ export function createRenderStream<
     ui: React.ReactNode,
     options?: RenderOptions<any, any, any>,
   ) => {
+    const effectsFlushed = nextEffectsFlushed()
     const ret = await renderWithoutAct(ui, {
       ...options,
       wrapper: props => {
@@ -268,9 +283,11 @@ export function createRenderStream<
     if (stream.renders.length === 0) {
       await stream.waitForNextRender()
     }
+    await effectsFlushed
     const origRerender = ret.rerender
     ret.rerender = async function rerender(rerenderUi: React.ReactNode) {
       const previousRenderCount = stream.renders.length
+      const rerenderEffectsFlushed = nextEffectsFlushed()
       try {
         return await origRerender(rerenderUi)
       } finally {
@@ -279,6 +296,7 @@ export function createRenderStream<
         if (previousRenderCount === stream.renders.length) {
           await stream.waitForNextRender()
         }
+        await rerenderEffectsFlushed
       }
     }
     return ret
