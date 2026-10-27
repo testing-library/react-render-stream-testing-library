@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+# Route publishing through npm's staging queue; forward other commands unchanged.
+set -euo pipefail
+
+# execa may prepend local bin directories before this wrapper's PATH entry.
+wrapper_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+remaining_path=":$PATH:"
+while [[ "$remaining_path" == *":$wrapper_dir:"* ]]; do
+  remaining_path="${remaining_path//":$wrapper_dir:"/:}"
+done
+remaining_path="${remaining_path#:}"
+export PATH="${remaining_path%:}"
+
+if [[ "${1:-}" == "publish" ]]; then
+  shift
+  exec npm stage publish "$@"
+fi
+
+exec npm "$@"

@@ -58,10 +58,10 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Setup Node.js 22.x
+      - name: Setup Node.js 24.x
         uses: actions/setup-node@v4
         with:
-          node-version: 22.x
+          node-version: '>=24.18.0 <25'
           cache: yarn
 
       - name: Install dependencies
@@ -69,6 +69,10 @@ jobs:
 
       - name: 🏗 Run build script
         run: yarn build
+
+      - name: Enable npm staged publishing
+        run: |
+          echo "$GITHUB_WORKSPACE/scripts/wrap-staged" >> "$GITHUB_PATH"
 
       - name: 🚀 Release
         uses: cycjimmy/semantic-release-action@v4
