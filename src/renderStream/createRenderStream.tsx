@@ -242,6 +242,13 @@ export function createRenderStream<
       })
     } finally {
       pendingCommits.set(`${id}:${commitTime}`, stream.renders.length)
+      if (/^(16|17)\./.test(React.version)) {
+        // React 16/17 have no onPostCommit hook. Let the commit finish scheduling
+        // passive effects before yielding a task for them to run.
+        void Promise.resolve().then(() => {
+          setTimeout(() => profilerOnPostCommit(id, phase, 0, commitTime), 0)
+        })
+      }
     }
   }
 

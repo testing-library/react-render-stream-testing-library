@@ -1,4 +1,5 @@
 import * as ReactDOMClient from 'react-dom/client'
+import * as ReactDOM from 'react-dom'
 import {type RenderOptions} from '@testing-library/react/pure.js'
 import {
   BoundFunction,
@@ -156,7 +157,11 @@ async function _renderWithoutAct(
   let root: ReturnType<typeof createConcurrentRoot>
   // eslint-disable-next-line no-negated-condition -- we want to map the evolution of this over time. The root is created first. Only later is it re-used so we don't want to read the case that happens later first.
   if (!mountedContainers.has(container)) {
-    root = createConcurrentRoot(container)
+    root = (
+      ReactDOM.version.startsWith('16') || ReactDOM.version.startsWith('17')
+        ? createLegacyRoot
+        : createConcurrentRoot
+    )(container)
     mountedRootEntries.push({container, root})
     // we'll add it to the mounted containers regardless of whether it's actually
     // added to document.body so the cleanup method works regardless of whether
@@ -180,6 +185,22 @@ async function _renderWithoutAct(
     wrapper,
     root: root!,
   })
+}
+
+function createLegacyRoot(container: ReactDOMClient.Container) {
+  // These runtime APIs are absent from React 19's types.
+  const legacyReactDOM = ReactDOM as unknown as {
+    render(element: React.ReactNode, container: ReactDOMClient.Container): void
+    unmountComponentAtNode(container: ReactDOMClient.Container): boolean
+  }
+  return {
+    render(element: React.ReactNode) {
+      legacyReactDOM.render(element, container)
+    },
+    unmount() {
+      legacyReactDOM.unmountComponentAtNode(container)
+    },
+  }
 }
 
 function createConcurrentRoot(container: ReactDOMClient.Container) {

@@ -40,7 +40,7 @@ describe('passive effects', () => {
       const received: number[] = []
       const stream = createRenderStream<{value: number}>()
       let update: React.Dispatch<React.SetStateAction<number>>
-      let parentRenders = 0
+      let parentCommits = 0
       function Subscriber() {
         const [value, setValue] = React.useState(0)
         update = setValue
@@ -55,7 +55,9 @@ describe('passive effects', () => {
         return null
       }
       function Parent() {
-        parentRenders++
+        React.useLayoutEffect(() => {
+          parentCommits++
+        })
         return <Subscriber />
       }
 
@@ -67,7 +69,7 @@ describe('passive effects', () => {
 
       expect(render.snapshot).toEqual({value: 1})
       expect(received).toEqual([1])
-      expect(parentRenders).toBe(1)
+      expect(parentCommits).toBe(1)
     },
   )
 
