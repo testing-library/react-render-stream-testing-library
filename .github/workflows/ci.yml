@@ -18,10 +18,10 @@ jobs:
         react: ['16.x', '17.x', '18.x', '19.0', '19.x']
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Setup Node.js 22.x
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 22.x
           cache: yarn
@@ -56,10 +56,10 @@ jobs:
       == 'push' }}
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Setup Node.js 24.x
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: '>=24.18.0 <25'
           cache: yarn
@@ -75,8 +75,9 @@ jobs:
           echo "$GITHUB_WORKSPACE/scripts/wrap-staged" >> "$GITHUB_PATH"
 
       - name: 🚀 Release
-        uses: cycjimmy/semantic-release-action@v4
+        uses: cycjimmy/semantic-release-action@d9bf53a078bd2f86aaffaec796dbb3d28f1b6f34 # v8
         with:
+          semantic_version: '25'
           branches: |
             [
               '+([0-9])?(.{+([0-9]),x}).x',
@@ -88,4 +89,3 @@ jobs:
             ]
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
