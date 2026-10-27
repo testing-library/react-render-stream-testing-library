@@ -52,12 +52,14 @@ export interface RenderStream<
   /**
    * Peeks the next render from the current iterator position, without advancing the iterator.
    * If no render has happened yet, it will wait for the next render to happen.
+   * Resolves after the recorded commit's passive effects have run.
    * @throws {WaitForRenderTimeoutError} if no render happens within the timeout
    */
   peekRender: (options?: NextRenderOptions) => Promise<Render<Snapshot, Q>>
   /**
    * Iterates to the next render and returns it.
    * If no render has happened yet, it will wait for the next render to happen.
+   * Resolves after the recorded commit's passive effects have run.
    * @throws {WaitForRenderTimeoutError} if no render happens within the timeout
    */
   takeRender: Assertable &
@@ -73,6 +75,7 @@ export interface RenderStream<
   getCurrentRender: () => Render<Snapshot, Q>
   /**
    * Waits for the next render to happen.
+   * Resolves after its passive effects have run.
    * Does not advance the render iterator.
    */
   waitForNextRender: (
@@ -84,6 +87,7 @@ export interface RenderStreamWithRenderFn<
   Snapshot extends ValidSnapshot,
   Q extends Queries = SyncQueries,
 > extends RenderStream<Snapshot, Q> {
+  /** Renders the UI and waits for the commit's passive effects to run. */
   render: RenderWithoutActAsync
 }
 
@@ -134,14 +138,20 @@ export function createRenderStream<
   // created, which is important for the `markAssertable` function
   const stream = {} as any as RenderStreamWithRenderFn<Snapshot, Q>
 
-  let nextRender: Promise<Render<Snapshot, Q>> | undefined,
-    resolveNextRender: ((render: Render<Snapshot, Q>) => void) | undefined,
-    rejectNextRender: ((error: unknown) => void) | undefined
-  function resetNextRender() {
-    nextRender = undefined
-    resolveNextRender = undefined
-    rejectNextRender = undefined
+  type Commit = PromiseWithResolvers<
+    (typeof stream.renders)[number] | undefined
+  > & {
+    finalize?: () => (typeof stream.renders)[number]
   }
+  let nextRender: Promise<Render<Snapshot, Q>> | undefined,
+    upcomingCommit: Commit | undefined
+  const pendingCommits: Array<{commitTime: number; commit: Commit}> = []
+
+  function nextCommit(): Commit {
+    return (upcomingCommit ??=
+      Promise.withResolvers<Awaited<Commit['promise']>>())
+  }
+
   const snapshotRef = {current: initialSnapshot}
   const replaceSnapshot: ReplaceSnapshot<Snapshot> = snap => {
     if (typeof snap === 'function') {
@@ -182,6 +192,16 @@ export function createRenderStream<
     startTime,
     commitTime,
   ) => {
+    const commit = nextCommit()
+    upcomingCommit = undefined
+    pendingCommits.push({commitTime, commit})
+    if (/^(16|17)\./.test(React.version)) {
+      // React 16/17 have no onPostCommit hook. Let the commit finish scheduling
+      // passive effects before yielding a task for them to run.
+      void Promise.resolve().then(() => {
+        setTimeout(() => profilerOnPostCommit(id, phase, 0, commitTime), 0)
+      })
+    }
     if (
       skipNonTrackingRenders &&
       renderStreamContext.renderedComponents.length === 0
@@ -196,7 +216,10 @@ export function createRenderStream<
       baseDuration,
       startTime,
       commitTime,
-      count: stream.renders.length + 1,
+      count:
+        stream.renders.length +
+        pendingCommits.filter(pending => pending.commit.finalize).length +
+        1,
     }
     try {
       /*
@@ -225,25 +248,47 @@ export function createRenderStream<
         queries,
       )
       renderStreamContext.renderedComponents = []
-      stream.renders.push(render)
-      resolveNextRender?.(render)
+      commit.finalize = () => {
+        stream.renders.push(render)
+        return render
+      }
     } catch (error) {
-      stream.renders.push({
-        phase: 'snapshotError',
-        count: stream.renders.length,
-        error,
-      })
-      rejectNextRender?.(error)
-    } finally {
-      resetNextRender()
+      commit.finalize = () => {
+        const err = {
+          phase: 'snapshotError' as const,
+          count: stream.renders.length,
+          error,
+        }
+        stream.renders.push(err)
+        return err
+      }
     }
+  }
+
+  function profilerOnPostCommit(
+    _id: string,
+    _phase: string,
+    _passiveEffectDuration: number,
+    commitTime: number,
+  ) {
+    const index = pendingCommits.findIndex(
+      pending => pending.commitTime === commitTime,
+    )
+    if (index === -1) return
+    const {commit} = pendingCommits.splice(index, 1)[0]
+    commit.resolve(commit.finalize?.())
   }
 
   let iteratorPosition = 0
   function Wrapper({children}: {children: React.ReactNode}) {
     return (
       <RenderStreamContextProvider value={renderStreamContext}>
-        <React.Profiler id="test" onRender={profilerOnRender}>
+        <React.Profiler
+          id="test"
+          onRender={profilerOnRender}
+          // Supported in React 18+ development/profiling builds, but untyped.
+          {...{onPostCommit: profilerOnPostCommit}}
+        >
           {children}
         </React.Profiler>
       </RenderStreamContextProvider>
@@ -254,6 +299,7 @@ export function createRenderStream<
     ui: React.ReactNode,
     options?: RenderOptions<any, any, any>,
   ) => {
+    const commit = nextCommit()
     const ret = await renderWithoutAct(ui, {
       ...options,
       wrapper: props => {
@@ -265,21 +311,12 @@ export function createRenderStream<
         )
       },
     })
-    if (stream.renders.length === 0) {
-      await stream.waitForNextRender()
-    }
+    await waitForCommit(commit)
     const origRerender = ret.rerender
     ret.rerender = async function rerender(rerenderUi: React.ReactNode) {
-      const previousRenderCount = stream.renders.length
-      try {
-        return await origRerender(rerenderUi)
-      } finally {
-        // only wait for the next render if the rerender was not
-        // synchronous (React 17)
-        if (previousRenderCount === stream.renders.length) {
-          await stream.waitForNextRender()
-        }
-      }
+      const rerenderCommit = nextCommit()
+      await origRerender(rerenderUi)
+      await waitForCommit(rerenderCommit)
     }
     return ret
   }) as unknown as RenderWithoutActAsync // TODO
@@ -295,27 +332,18 @@ export function createRenderStream<
       return stream.renders.length
     },
     async peekRender(options: NextRenderOptions = {}) {
-      try {
-        if (iteratorPosition < stream.renders.length) {
-          const peekedRender = stream.renders[iteratorPosition]
+      if (iteratorPosition < stream.renders.length) {
+        const peekedRender = stream.renders[iteratorPosition]
 
-          if (peekedRender.phase === 'snapshotError') {
-            throw peekedRender.error
-          }
-
-          return peekedRender
+        if (peekedRender.phase === 'snapshotError') {
+          throw peekedRender.error
         }
-        return await stream
-          .waitForNextRender(options)
-          .catch(rethrowWithCapturedStackTrace(stream.peekRender))
-      } finally {
-        /** drain microtask queue */
-        await new Promise<void>(resolve => {
-          setTimeout(() => {
-            resolve()
-          }, 0)
-        })
+
+        return peekedRender
       }
+      return stream
+        .waitForNextRender(options)
+        .catch(rethrowWithCapturedStackTrace(stream.peekRender))
     },
     takeRender: markAssertable(async function takeRender(
       options: NextRenderOptions = {},
@@ -361,26 +389,59 @@ export function createRenderStream<
     },
     waitForNextRender({timeout = 1000}: NextRenderOptions = {}) {
       if (!nextRender) {
+        const position = stream.renders.length
+        const wait = {active: true}
+        let timer: ReturnType<typeof setTimeout> | undefined
         nextRender = Promise.race<Render<Snapshot, Q>>([
-          new Promise<Render<Snapshot, Q>>((resolve, reject) => {
-            resolveNextRender = resolve
-            rejectNextRender = reject
-          }),
-          new Promise<Render<Snapshot, Q>>((_, reject) =>
-            setTimeout(() => {
+          (async () => {
+            while (wait.active && stream.renders.length === position) {
+              // A skipped commit completes without publishing a snapshot.
+              // eslint-disable-next-line no-await-in-loop
+              await (pendingCommits[0]?.commit ?? nextCommit()).promise
+            }
+            if (!wait.active) throw new WaitForRenderTimeoutError()
+            const next = stream.renders[position]
+            if (next.phase === 'snapshotError') throw next.error
+            return next
+          })(),
+          new Promise<Render<Snapshot, Q>>((_, reject) => {
+            timer = setTimeout(() => {
               const error = new WaitForRenderTimeoutError()
               Error.captureStackTrace(error, stream.waitForNextRender)
               reject(error)
-              resetNextRender()
-            }, timeout),
-          ),
-        ])
+            }, timeout)
+          }),
+        ]).finally(() => {
+          wait.active = false
+          clearTimeout(timer)
+          nextRender = undefined
+        })
       }
       return nextRender
     },
     render,
   })
   return stream
+
+  async function waitForCommit(commit: Commit) {
+    let timer: ReturnType<typeof setTimeout> | undefined
+    try {
+      return await Promise.race([
+        commit.promise.then(result => {
+          if (result?.phase === 'snapshotError') throw result.error
+          return result
+        }),
+        new Promise<never>((_, reject) => {
+          timer = setTimeout(
+            () => reject(new WaitForRenderTimeoutError()),
+            1000,
+          )
+        }),
+      ])
+    } finally {
+      clearTimeout(timer)
+    }
+  }
 }
 
 function rethrowWithCapturedStackTrace(constructorOpt: Function | undefined) {

@@ -17,12 +17,14 @@ export interface SnapshotStream<Snapshot, Props> extends Assertable {
   /**
    * Peeks the next render from the current iterator position, without advancing the iterator.
    * If no render has happened yet, it will wait for the next render to happen.
+   * Resolves after the recorded commit's passive effects have run.
    * @throws {WaitForRenderTimeoutError} if no render happens within the timeout
    */
   peekSnapshot(options?: NextRenderOptions): Promise<Snapshot>
   /**
    * Iterates to the next render and returns it.
    * If no render has happened yet, it will wait for the next render to happen.
+   * Resolves after the recorded commit's passive effects have run.
    * @throws {WaitForRenderTimeoutError} if no render happens within the timeout
    */
   takeSnapshot: Assertable &
@@ -38,9 +40,11 @@ export interface SnapshotStream<Snapshot, Props> extends Assertable {
   getCurrentSnapshot(): Snapshot
   /**
    * Waits for the next render to happen.
+   * Resolves after its passive effects have run.
    * Does not advance the render iterator.
    */
   waitForNextSnapshot(options?: NextRenderOptions): Promise<Snapshot>
+  /** Rerenders the hook and waits for the commit's passive effects to run. */
   rerender: (rerenderCallbackProps: VoidOptionalArg<Props>) => Promise<void>
   unmount: () => void
 }

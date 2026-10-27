@@ -18,9 +18,9 @@ import {
 // Ideally we'd just use a WeakMap where containers are keys and roots are values.
 // We use two variables so that we can bail out in constant time when we render with a new container (most common use case)
 
-const mountedContainers: Set<import('react-dom').Container> = new Set()
+const mountedContainers: Set<ReactDOMClient.Container> = new Set()
 const mountedRootEntries: Array<{
-  container: import('react-dom').Container
+  container: ReactDOMClient.Container
   root: ReturnType<typeof createConcurrentRoot>
 }> = []
 
@@ -188,12 +188,17 @@ async function _renderWithoutAct(
 }
 
 function createLegacyRoot(container: ReactDOMClient.Container) {
+  // These runtime APIs are absent from React 19's types.
+  const legacyReactDOM = ReactDOM as unknown as {
+    render(element: React.ReactNode, container: ReactDOMClient.Container): void
+    unmountComponentAtNode(container: ReactDOMClient.Container): boolean
+  }
   return {
     render(element: React.ReactNode) {
-      ReactDOM.render(element as unknown as React.ReactElement, container)
+      legacyReactDOM.render(element, container)
     },
     unmount() {
-      ReactDOM.unmountComponentAtNode(container)
+      legacyReactDOM.unmountComponentAtNode(container)
     },
   }
 }

@@ -9,6 +9,9 @@ import {
 } from '@testing-library/react-render-stream'
 import * as React from 'react'
 
+const testWithExternalStore =
+  typeof React.useSyncExternalStore === 'function' ? test : test.skip
+
 const testEvents = new EventEmitter<{
   rerenderWithValue: [unknown]
 }>()
@@ -32,7 +35,7 @@ function useRerenderEvents(initialValue: unknown) {
   )
 }
 
-test('basic functionality', async () => {
+testWithExternalStore('basic functionality', async () => {
   const {takeSnapshot} = await renderHookToSnapshotStream(useRerenderEvents, {
     initialProps: 'initial',
   })
@@ -53,7 +56,9 @@ test('basic functionality', async () => {
   }
 })
 
-test.each<[type: string, initialValue: unknown, ...nextValues: unknown[]]>([
+testWithExternalStore.each<
+  [type: string, initialValue: unknown, ...nextValues: unknown[]]
+>([
   ['string', 'initial', 'value', 'value2'],
   ['number', 0, 1, 2],
   ['functions', () => {}, () => {}, function named() {}],
