@@ -11,6 +11,8 @@ import {type RenderStreamContextValue} from './context.js'
 import {RenderStreamContextProvider} from './context.js'
 import {syncQueries, type Queries, type SyncQueries} from './syncQueries.js'
 
+let nextProfilerId = 0
+
 export type ValidSnapshot =
   // eslint-disable-next-line @typescript-eslint/no-invalid-void-type
   void | (object & {/* not a function */ call?: never})
@@ -146,6 +148,8 @@ export function createRenderStream<
     resolveNextRender = undefined
     rejectNextRender = undefined
   }
+  let effectsFlushedCount = 0
+  const pendingCommits = new Map<string, number>()
   const snapshotRef = {current: initialSnapshot}
   const replaceSnapshot: ReplaceSnapshot<Snapshot> = snap => {
     if (typeof snap === 'function') {
@@ -230,24 +234,47 @@ export function createRenderStream<
       )
       renderStreamContext.renderedComponents = []
       stream.renders.push(render)
-      resolveNextRender?.(render)
     } catch (error) {
       stream.renders.push({
         phase: 'snapshotError',
         count: stream.renders.length,
         error,
       })
-      rejectNextRender?.(error)
     } finally {
-      resetNextRender()
+      pendingCommits.set(`${id}:${commitTime}`, stream.renders.length)
     }
   }
 
+  function profilerOnPostCommit(
+    id: string,
+    _phase: string,
+    _passiveEffectDuration: number,
+    commitTime: number,
+  ) {
+    const key = `${id}:${commitTime}`
+    const renderCount = pendingCommits.get(key)
+    if (renderCount === undefined) return
+    pendingCommits.delete(key)
+    const render = stream.renders[effectsFlushedCount]
+    effectsFlushedCount = renderCount
+    if (render.phase === 'snapshotError') {
+      rejectNextRender?.(render.error)
+    } else {
+      resolveNextRender?.(render)
+    }
+    resetNextRender()
+  }
+
   let iteratorPosition = 0
-  function Wrapper({children}: {children: React.ReactNode}) {
+  function Wrapper({children, id}: {children: React.ReactNode; id: string}) {
     return (
       <RenderStreamContextProvider value={renderStreamContext}>
-        <React.Profiler id="test" onRender={profilerOnRender}>
+        <React.Profiler
+          id={id}
+          onRender={profilerOnRender}
+          // Supported in React 18+ development/profiling builds, but untyped.
+          {...{onPostCommit: profilerOnPostCommit}}
+        >
           {children}
         </React.Profiler>
       </RenderStreamContextProvider>
@@ -258,31 +285,32 @@ export function createRenderStream<
     ui: React.ReactNode,
     options?: RenderOptions<any, any, any>,
   ) => {
+    const id = `render-stream-${nextProfilerId++}`
+    const previousRenderCount = stream.renders.length
     const ret = await renderWithoutAct(ui, {
       ...options,
       wrapper: props => {
         const ParentWrapper = options?.wrapper ?? React.Fragment
         return (
           <ParentWrapper>
-            <Wrapper>{props.children}</Wrapper>
+            <Wrapper id={id}>{props.children}</Wrapper>
           </ParentWrapper>
         )
       },
     })
-    if (stream.renders.length === 0) {
+    // eslint-disable-next-line no-unmodified-loop-condition -- updated by onPostCommit
+    while (effectsFlushedCount <= previousRenderCount) {
+      // eslint-disable-next-line no-await-in-loop
       await stream.waitForNextRender()
     }
     const origRerender = ret.rerender
     ret.rerender = async function rerender(rerenderUi: React.ReactNode) {
-      const previousRenderCount = stream.renders.length
-      try {
-        return await origRerender(rerenderUi)
-      } finally {
-        // only wait for the next render if the rerender was not
-        // synchronous (React 17)
-        if (previousRenderCount === stream.renders.length) {
-          await stream.waitForNextRender()
-        }
+      const rerenderPosition = stream.renders.length
+      await origRerender(rerenderUi)
+      // eslint-disable-next-line no-unmodified-loop-condition -- updated by onPostCommit
+      while (effectsFlushedCount <= rerenderPosition) {
+        // eslint-disable-next-line no-await-in-loop
+        await stream.waitForNextRender()
       }
     }
     return ret
@@ -299,27 +327,18 @@ export function createRenderStream<
       return stream.renders.length
     },
     async peekRender(options: NextRenderOptions = {}) {
-      try {
-        if (iteratorPosition < stream.renders.length) {
-          const peekedRender = stream.renders[iteratorPosition]
+      if (iteratorPosition < effectsFlushedCount) {
+        const peekedRender = stream.renders[iteratorPosition]
 
-          if (peekedRender.phase === 'snapshotError') {
-            throw peekedRender.error
-          }
-
-          return peekedRender
+        if (peekedRender.phase === 'snapshotError') {
+          throw peekedRender.error
         }
-        return await stream
-          .waitForNextRender(options)
-          .catch(rethrowWithCapturedStackTrace(stream.peekRender))
-      } finally {
-        /** drain microtask queue */
-        await new Promise<void>(resolve => {
-          setTimeout(() => {
-            resolve()
-          }, 0)
-        })
+
+        return peekedRender
       }
+      return stream
+        .waitForNextRender(options)
+        .catch(rethrowWithCapturedStackTrace(stream.peekRender))
     },
     takeRender: markAssertable(async function takeRender(
       options: NextRenderOptions = {},
