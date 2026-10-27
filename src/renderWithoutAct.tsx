@@ -1,5 +1,4 @@
 import * as ReactDOMClient from 'react-dom/client'
-import * as ReactDOM from 'react-dom'
 import {type RenderOptions} from '@testing-library/react/pure.js'
 import {
   BoundFunction,
@@ -18,9 +17,9 @@ import {
 // Ideally we'd just use a WeakMap where containers are keys and roots are values.
 // We use two variables so that we can bail out in constant time when we render with a new container (most common use case)
 
-const mountedContainers: Set<import('react-dom').Container> = new Set()
+const mountedContainers: Set<ReactDOMClient.Container> = new Set()
 const mountedRootEntries: Array<{
-  container: import('react-dom').Container
+  container: ReactDOMClient.Container
   root: ReturnType<typeof createConcurrentRoot>
 }> = []
 
@@ -157,11 +156,7 @@ async function _renderWithoutAct(
   let root: ReturnType<typeof createConcurrentRoot>
   // eslint-disable-next-line no-negated-condition -- we want to map the evolution of this over time. The root is created first. Only later is it re-used so we don't want to read the case that happens later first.
   if (!mountedContainers.has(container)) {
-    root = (
-      ReactDOM.version.startsWith('16') || ReactDOM.version.startsWith('17')
-        ? createLegacyRoot
-        : createConcurrentRoot
-    )(container)
+    root = createConcurrentRoot(container)
     mountedRootEntries.push({container, root})
     // we'll add it to the mounted containers regardless of whether it's actually
     // added to document.body so the cleanup method works regardless of whether
@@ -185,17 +180,6 @@ async function _renderWithoutAct(
     wrapper,
     root: root!,
   })
-}
-
-function createLegacyRoot(container: ReactDOMClient.Container) {
-  return {
-    render(element: React.ReactNode) {
-      ReactDOM.render(element as unknown as React.ReactElement, container)
-    },
-    unmount() {
-      ReactDOM.unmountComponentAtNode(container)
-    },
-  }
 }
 
 function createConcurrentRoot(container: ReactDOMClient.Container) {

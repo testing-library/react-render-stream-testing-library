@@ -52,12 +52,14 @@ export interface RenderStream<
   /**
    * Peeks the next render from the current iterator position, without advancing the iterator.
    * If no render has happened yet, it will wait for the next render to happen.
+   * Resolves after the recorded commit's passive effects have run.
    * @throws {WaitForRenderTimeoutError} if no render happens within the timeout
    */
   peekRender: (options?: NextRenderOptions) => Promise<Render<Snapshot, Q>>
   /**
    * Iterates to the next render and returns it.
    * If no render has happened yet, it will wait for the next render to happen.
+   * Resolves after the recorded commit's passive effects have run.
    * @throws {WaitForRenderTimeoutError} if no render happens within the timeout
    */
   takeRender: Assertable &
@@ -73,6 +75,7 @@ export interface RenderStream<
   getCurrentRender: () => Render<Snapshot, Q>
   /**
    * Waits for the next render to happen.
+   * Resolves after its passive effects have run.
    * Does not advance the render iterator.
    */
   waitForNextRender: (
@@ -84,6 +87,7 @@ export interface RenderStreamWithRenderFn<
   Snapshot extends ValidSnapshot,
   Q extends Queries = SyncQueries,
 > extends RenderStream<Snapshot, Q> {
+  /** Renders the UI and waits for the commit's passive effects to run. */
   render: RenderWithoutActAsync
 }
 
