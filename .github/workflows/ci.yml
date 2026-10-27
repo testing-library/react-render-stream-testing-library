@@ -10,8 +10,12 @@ on:
 
 jobs:
   ci:
-    name: CI
+    name: CI (React ${{ matrix.react }})
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        react: ['16.x', '17.x', '18.x', '19.0', '19.x']
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -24,6 +28,15 @@ jobs:
 
       - name: Install dependencies
         run: yarn install
+
+      - name: Install React ${{ matrix.react }}
+        run:
+          yarn add --dev react@${{ matrix.react }} react-dom@${{ matrix.react }}
+        env:
+          YARN_ENABLE_IMMUTABLE_INSTALLS: false
+
+      - name: Build package
+        run: yarn build
 
       - name: Run tests, lint and verify package integrity
         run: yarn run validate
