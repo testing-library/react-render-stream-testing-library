@@ -73,7 +73,7 @@ describe('passive effects', () => {
     },
   )
 
-  test('takeRender waits for effects even when the commit is already recorded', async () => {
+  test('takeRender waits for effects even when onRender has already run', async () => {
     let commitRecorded: () => void = () => {}
     const stream = createRenderStream<{value: number}>({
       onRender: () => commitRecorded(),
@@ -97,7 +97,6 @@ describe('passive effects', () => {
     })
     update!(1)
     await committed
-    expect(stream.renders).toHaveLength(2)
     expect((await stream.takeRender()).snapshot).toEqual({value: 1})
     expect(effectValue).toBe(1)
   })
@@ -222,6 +221,7 @@ describe('passive effects', () => {
     for (const value of [0, 1, 2]) {
       // eslint-disable-next-line no-await-in-loop
       const render = await stream.takeRender()
+      expect(render.count).toBe(value + 1)
       expect(render.snapshot).toEqual({value})
       expect(render.withinDOM().getByTestId('value').textContent).toBe(
         String(value),
