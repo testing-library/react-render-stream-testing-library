@@ -142,8 +142,11 @@ export function createRenderStream<
 
   let nextRender: Promise<Render<Snapshot, Q>> | undefined,
     resolveNextRender: ((render: Render<Snapshot, Q>) => void) | undefined,
-    rejectNextRender: ((error: unknown) => void) | undefined
+    rejectNextRender: ((error: unknown) => void) | undefined,
+    nextRenderTimeout: ReturnType<typeof setTimeout> | undefined
   function resetNextRender() {
+    clearTimeout(nextRenderTimeout)
+    nextRenderTimeout = undefined
     nextRender = undefined
     resolveNextRender = undefined
     rejectNextRender = undefined
@@ -396,14 +399,14 @@ export function createRenderStream<
             resolveNextRender = resolve
             rejectNextRender = reject
           }),
-          new Promise<Render<Snapshot, Q>>((_, reject) =>
-            setTimeout(() => {
+          new Promise<Render<Snapshot, Q>>((_, reject) => {
+            nextRenderTimeout = setTimeout(() => {
               const error = new WaitForRenderTimeoutError()
               Error.captureStackTrace(error, stream.waitForNextRender)
               reject(error)
               resetNextRender()
-            }, timeout),
-          ),
+            }, timeout)
+          }),
         ])
       }
       return nextRender
